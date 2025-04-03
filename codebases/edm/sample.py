@@ -26,6 +26,7 @@ import numpy as np
 from torchvision.utils import make_grid, save_image
 from samplers.dpm_solver import DPM_Solver
 from samplers.uni_pc import UniPC
+from samplers.rbf import RBFSolverGLQ10LagTime as RBF
 from samplers.dpm_solver_v3 import DPM_Solver_v3
 from samplers.heun import Heun
 from samplers.utils import NoiseScheduleEDM, model_wrapper
@@ -147,6 +148,27 @@ def sample(
                 return x, steps
 
         sampling_fn = uni_pc_sampler
+
+    elif method == "rbf":
+        rbf = RBF(ns, algorithm_type="data_prediction", correcting_x0_fn=None)
+
+        def rbf_sampler(model_fn, z):
+            with torch.no_grad():
+                x = rbf.sample(
+                    model_fn,
+                    z,
+                    steps=steps - 1 if denoise_to_zero else steps,
+                    t_start=sigma_max,
+                    t_end=sigma_min,
+                    order=order,
+                    skip_type=skip_type,
+                    lower_order_final=True,
+                    denoise_to_zero=denoise_to_zero,
+                )
+                return x, steps
+
+        sampling_fn = rbf_sampler
+
     elif method == "dpm_solver_v3":
         assert statistics_dir is not None, "No appropriate statistics found."
         print("Use statistics", statistics_dir)
