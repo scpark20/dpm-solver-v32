@@ -455,7 +455,7 @@ class RBFSolverGLQ10LagTime:
             noise_rates = torch.tensor([self.noise_schedule.marginal_std(t) for t in timesteps], device=device)
             
             hist = [None for _ in range(steps)]
-            hist[0] = self.model(x, timesteps[0])   # model(x,t) 평가값을 저장
+            hist[0] = self.model_fn(x, timesteps[0])   # model(x,t) 평가값을 저장
             
             for i in range(0, steps):
                 if lower_order_final:
@@ -475,7 +475,7 @@ class RBFSolverGLQ10LagTime:
                     break
                 
                 # predictor로 구한 x_pred를 이용해서 model_fn 평가
-                hist[i+1] = self.model(x_pred, timesteps[i+1])
+                hist[i+1] = self.model_fn(x_pred, timesteps[i+1])
                 
                 # ===corrector===
                 s = log_scale_c if log_scales is None else log_scales[1, i]

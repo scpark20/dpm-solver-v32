@@ -46,11 +46,19 @@ def compute_fid(path):
     fid = tfgan.eval.frechet_classifier_distance_from_activations(data_pools, all_pools)
     return fid
 
-
-for name in ["dpm_solver++", "heun", "uni_pc_bh1", "uni_pc_bh2", "dpm_solver_v3"]:
+for name in ['rbf']:
     fids = []
     for step in [5, 6, 8, 10, 12, 15, 20, 25]:
-        path = f"samples/edm-cifar10-32x32-uncond-vp/{name}_{step}"
+        path = f"/data/edm/{name}_{step}"
         fid = compute_fid(path)
         fids.append(float(fid))
     print(name, fids, file=open("output.txt", "a"))
+
+# for name in ["dpm_solver++", "heun", "uni_pc_bh1", "uni_pc_bh2", "dpm_solver_v3"]:
+#     fids = []
+#     for step in [5, 6, 8, 10, 12, 15, 20, 25]:
+#         path = f"samples/edm-cifar10-32x32-uncond-vp/{name}_{step}"
+#         fid = compute_fid(path)
+#         fids.append(float(fid))
+#     print(name, fids, file=open("output.txt", "a"))
+
