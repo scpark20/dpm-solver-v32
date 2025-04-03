@@ -393,6 +393,94 @@ class Diffusion(object):
                 lower_order_final=self.args.lower_order_final,
                 denoise_to_zero=self.args.denoise,
             )
+
+        elif self.args.sample_type == "rbf":
+            from samplers.uni_pc import NoiseScheduleVP, model_wrapper
+            from samplers.rbf import RBFSolverGLQ10LagTime
+
+            def model_fn(x, t, **model_kwargs):
+                out = model(x, t, **model_kwargs)
+                # If the model outputs both 'mean' and 'variance' (such as improved-DDPM and guided-diffusion),
+                # We only use the 'mean' output for DPM-Solver, because DPM-Solver is based on diffusion ODEs.
+                if "out_channels" in self.config.model.__dict__.keys():
+                    if self.config.model.out_channels == 6:
+                        out = torch.split(out, 3, dim=1)[0]
+                return out
+
+            def classifier_fn(x, t, y, **classifier_kwargs):
+                logits = classifier(x, t)
+                log_probs = torch.nn.functional.log_softmax(logits, dim=-1)
+                return log_probs[range(len(logits)), y.view(-1)]
+
+            noise_schedule = NoiseScheduleVP(schedule="discrete", betas=self.betas)
+            model_fn_continuous = model_wrapper(
+                model_fn,
+                noise_schedule,
+                model_type="noise",
+                model_kwargs=model_kwargs,
+                guidance_type="uncond" if classifier is None else "classifier",
+                condition=model_kwargs["y"] if "y" in model_kwargs.keys() else None,
+                guidance_scale=classifier_scale,
+                classifier_fn=classifier_fn,
+                classifier_kwargs={},
+            )
+            rbf = RBFSolverGLQ10LagTime(
+                model_fn_continuous,
+                noise_schedule,
+                algorithm_type="data_prediction",
+                correcting_x0_fn="dynamic_thresholding" if self.args.thresholding else None,
+            )
+            x = rbf.sample(
+                x,
+                steps=(self.args.timesteps - 1 if self.args.denoise else self.args.timesteps),
+                order=self.args.order,
+                skip_type=self.args.skip_type,
+                lower_order_final=self.args.lower_order_final,
+                denoise_to_zero=self.args.denoise,
+            )    
+        elif self.args.sample_type == "unipc":
+            from samplers.uni_pc import NoiseScheduleVP, model_wrapper, UniPC
+
+            def model_fn(x, t, **model_kwargs):
+                out = model(x, t, **model_kwargs)
+                # If the model outputs both 'mean' and 'variance' (such as improved-DDPM and guided-diffusion),
+                # We only use the 'mean' output for DPM-Solver, because DPM-Solver is based on diffusion ODEs.
+                if "out_channels" in self.config.model.__dict__.keys():
+                    if self.config.model.out_channels == 6:
+                        out = torch.split(out, 3, dim=1)[0]
+                return out
+
+            def classifier_fn(x, t, y, **classifier_kwargs):
+                logits = classifier(x, t)
+                log_probs = torch.nn.functional.log_softmax(logits, dim=-1)
+                return log_probs[range(len(logits)), y.view(-1)]
+
+            noise_schedule = NoiseScheduleVP(schedule="discrete", betas=self.betas)
+            model_fn_continuous = model_wrapper(
+                model_fn,
+                noise_schedule,
+                model_type="noise",
+                model_kwargs=model_kwargs,
+                guidance_type="uncond" if classifier is None else "classifier",
+                condition=model_kwargs["y"] if "y" in model_kwargs.keys() else None,
+                guidance_scale=classifier_scale,
+                classifier_fn=classifier_fn,
+                classifier_kwargs={},
+            )
+            unipc = UniPC(
+                model_fn_continuous,
+                noise_schedule,
+                algorithm_type="data_prediction",
+                correcting_x0_fn="dynamic_thresholding" if self.args.thresholding else None,
+            )
+            x = unipc.sample(
+                x,
+                steps=(self.args.timesteps - 1 if self.args.denoise else self.args.timesteps),
+                order=self.args.order,
+                skip_type=self.args.skip_type,
+                lower_order_final=self.args.lower_order_final,
+                denoise_to_zero=self.args.denoise,
+            )    
         elif self.args.sample_type == "dpmsolver_v3":
             from samplers.dpm_solver_v3 import model_wrapper
 
