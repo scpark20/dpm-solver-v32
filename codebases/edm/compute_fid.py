@@ -14,7 +14,7 @@ BATCH_SIZE = 1000
 
 def load_cifar10_stats():
     """Load the pre-computed dataset statistics."""
-    filename = "assets/stats/cifar10_stats.npz"
+    filename = "/data/checkpoints/dpm-solver/cifar10_stats.npz"
 
     with tf.io.gfile.GFile(filename, "rb") as fin:
         stats = np.load(fin)
@@ -22,6 +22,7 @@ def load_cifar10_stats():
 
 
 def compute_fid(path):
+    data_stats = load_cifar10_stats()
     images = []
     for file in os.listdir(path):
         if file.endswith(".npz"):
@@ -40,18 +41,17 @@ def compute_fid(path):
         gc.collect()
         all_pools.append(latents["pool_3"])
     all_pools = np.concatenate(all_pools, axis=0)[:50000, ...]
-    data_stats = load_cifar10_stats()
     data_pools = data_stats["pool_3"]
-
     fid = tfgan.eval.frechet_classifier_distance_from_activations(data_pools, all_pools)
     return fid
 
 for name in ['rbf']:
     fids = []
-    for step in [5, 6, 8, 10, 12, 15, 20, 25]:
+    for step in [25]:
         path = f"/data/edm/{name}_{step}"
         fid = compute_fid(path)
         fids.append(float(fid))
+        print('steps :', step, 'FID :', fid)
     print(name, fids, file=open("output.txt", "a"))
 
 # for name in ["dpm_solver++", "heun", "uni_pc_bh1", "uni_pc_bh2", "dpm_solver_v3"]:
