@@ -14,7 +14,7 @@ BATCH_SIZE = 1000
 
 def load_cifar10_stats():
     """Load the pre-computed dataset statistics."""
-    filename = "/data/checkpoints/dpm-solver/cifar10_stats.npz"
+    filename = "/data/checkpoints/cifar10_stats.npz"
 
     with tf.io.gfile.GFile(filename, "rb") as fin:
         stats = np.load(fin)
