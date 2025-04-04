@@ -14,7 +14,7 @@ BATCH_SIZE = 1000
 
 def load_cifar10_stats():
     """Load the pre-computed dataset statistics."""
-    filename = "assets/stats/cifar10_stats.npz"
+    filename = "/data/checkpoints/cifar10_stats.npz"
 
     with tf.io.gfile.GFile(filename, "rb") as fin:
         stats = np.load(fin)
@@ -22,6 +22,7 @@ def load_cifar10_stats():
 
 
 def compute_fid(path):
+    data_stats = load_cifar10_stats()
     images = []
     for file in os.listdir(path):
         if file.endswith(".npz"):
@@ -31,7 +32,8 @@ def compute_fid(path):
     samples = np.concatenate(images, axis=0)
     all_pools = []
     N = samples.shape[0]
-    assert N >= 50000, "At least 50k samples are required to compute FID."
+    if N < 50000:
+        return None
     for i in tqdm(range(N // BATCH_SIZE)):
         gc.collect()
         latents = run_inception_distributed(
@@ -40,16 +42,41 @@ def compute_fid(path):
         gc.collect()
         all_pools.append(latents["pool_3"])
     all_pools = np.concatenate(all_pools, axis=0)[:50000, ...]
-    data_stats = load_cifar10_stats()
     data_pools = data_stats["pool_3"]
 
     fid = tfgan.eval.frechet_classifier_distance_from_activations(data_pools, all_pools)
     return fid
 
-for name in ["DPM-Solver++", "UniPC_bh1", "UniPC_bh2", "DPM-Solver-v3"]:
-    fids = []
-    for step in [5, 6, 8, 10, 12, 15, 20, 25]:
+names = ["UniPC_bh1", "rbf"]
+steps = [30, 35, 40, 45, 50]
+
+if not os.path.isdir('fid'):
+    os.makedirs('fid')
+
+for name in names:
+    for step in steps:
+        # 각 name과 step에 해당하는 파일명을 만들고, 결과를 기록
+        filename = f"{name}_{step}_output.txt"
+        filename = os.path.join('fid', filename)
+        if os.path.exists(filename):
+            continue
+        
         path = f"samples/checkpoint_8/{name}_{step}"
-        fid = compute_fid(path)
-        fids.append(float(fid))
-    print(name, fids, file=open("output.txt", "a"))
+        fid = compute_fid(path)  # FID 계산
+        if fid is None:
+            continue
+        
+        with open(filename, "w", encoding="utf-8") as f:
+            f.write(f"name : {name}\n")
+            f.write(f"step : {step}\n")
+            f.write(f"FID  : {fid}\n")
+
+        print(f"파일 생성 완료: {filename} (FID={fid})")
+
+# for name in ["DPM-Solver++", "UniPC_bh1", "UniPC_bh2", "DPM-Solver-v3"]:
+#     fids = []
+#     for step in [5, 6, 8, 10, 12, 15, 20, 25]:
+#         path = f"samples/checkpoint_8/{name}_{step}"
+#         fid = compute_fid(path)
+#         fids.append(float(fid))
+#     print(name, fids, file=open("output.txt", "a"))
