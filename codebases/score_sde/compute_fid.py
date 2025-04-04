@@ -47,7 +47,7 @@ def compute_fid(path):
     fid = tfgan.eval.frechet_classifier_distance_from_activations(data_pools, all_pools)
     return fid
 
-names = ["rbf_unipc"]
+names = ["rbf_unipc", "rbf_unipc_bh2"]
 steps = [5, 6, 8, 10, 12, 15, 20, 25]
 
 if not os.path.isdir('fid'):
@@ -55,13 +55,15 @@ if not os.path.isdir('fid'):
 
 for name in names:
     for step in steps:
+        print(f'Name={name}, NFE={step}')
         # 각 name과 step에 해당하는 파일명을 만들고, 결과를 기록
         filename = f"{name}_{step}_output.txt"
         filename = os.path.join('fid', filename)
         if os.path.exists(filename):
             continue
-        
         path = f"/data/score_sde_outputs/checkpoint_8/{name}_{step}"
+        if not os.path.exists(path):
+            continue
         fid = compute_fid(path)  # FID 계산
         if fid is None:
             continue

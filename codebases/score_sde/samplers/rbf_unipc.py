@@ -259,6 +259,7 @@ class RBFUniPC:
         if self.variant == "bh1":
             B_h = hh
         elif self.variant == "bh2":
+            #print('operating bh2')
             B_h = torch.expm1(hh)
         else:
             raise NotImplementedError()
