@@ -56,8 +56,9 @@ for name in names:
         filename = os.path.join('fid', filename)
         if os.path.exists(filename):
             continue
-        
         path = f"/data/edm/{name}_{step}"
+        if not os.path.exists(path):
+            continue
         fid = compute_fid(path)  # FID 계산
         if fid is None:
             continue
