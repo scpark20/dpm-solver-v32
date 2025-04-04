@@ -32,7 +32,8 @@ def compute_fid(path):
     samples = np.concatenate(images, axis=0)
     all_pools = []
     N = samples.shape[0]
-    assert N >= 50000, "At least 50k samples are required to compute FID."
+    if N < 50000:
+        return None
     for i in tqdm(range(N // BATCH_SIZE)):
         gc.collect()
         latents = run_inception_distributed(
