@@ -45,14 +45,30 @@ def compute_fid(path):
     fid = tfgan.eval.frechet_classifier_distance_from_activations(data_pools, all_pools)
     return fid
 
-for name in ['rbf']:
-    fids = []
-    for step in [25]:
+names = ["rbf_unipc"]
+steps = [5, 6, 8, 10, 12, 15, 20, 25]
+if not os.path.isdir('fid'):
+    os.makedirs('fid')
+for name in names:
+    for step in steps:
+        # 각 name과 step에 해당하는 파일명을 만들고, 결과를 기록
+        filename = f"{name}_{step}_output.txt"
+        filename = os.path.join('fid', filename)
+        if os.path.exists(filename):
+            continue
+        
         path = f"/data/edm/{name}_{step}"
-        fid = compute_fid(path)
-        fids.append(float(fid))
-        print('steps :', step, 'FID :', fid)
-    print(name, fids, file=open("output.txt", "a"))
+        fid = compute_fid(path)  # FID 계산
+        if fid is None:
+            continue
+        
+        with open(filename, "w", encoding="utf-8") as f:
+            f.write(f"name : {name}\n")
+            f.write(f"step : {step}\n")
+            f.write(f"FID  : {fid}\n")
+
+        print(f"파일 생성 완료: {filename} (FID={fid})")
+
 
 # for name in ["dpm_solver++", "heun", "uni_pc_bh1", "uni_pc_bh2", "dpm_solver_v3"]:
 #     fids = []
