@@ -171,7 +171,7 @@ def sample(
         sampling_fn = rbf_sampler
 
     elif method == "rbf_unipc":
-        rbf_unipc = RBFUniPC(ns, algorithm_type="data_prediction", correcting_x0_fn=None)
+        rbf_unipc = RBFUniPC(ns, algorithm_type="data_prediction", correcting_x0_fn=None, variant=unipc_variant)
 
         def rbf_unipc_sampler(model_fn, z):
             with torch.no_grad():

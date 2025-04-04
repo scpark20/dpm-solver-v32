@@ -8,7 +8,7 @@ else
 STATS_DIR="statistics/edm-cifar10-32x32-uncond-vp/0.002_80.0_120_4096"
 fi
 
-python sample.py --sample_folder="/data/edm/rbf_unipc_"$steps --ckp_path=$CKPT_PATH --method=rbf_unipc --steps=$steps --skip_type=logSNR
+python sample.py --sample_folder="/data/edm/rbf_unipc_bh2_"$steps --ckp_path=$CKPT_PATH --unipc_variant=bh2 --method=rbf_unipc --steps=$steps --skip_type=logSNR
 
 # python sample.py --sample_folder="heun_"$steps --ckp_path=$CKPT_PATH --method=heun --steps=$steps --skip_type=edm
 
