@@ -5,10 +5,8 @@ import numpy as np
 from .utils import expand_dims
 import math
 
-# Gaussian-Legendre Quadrature
-# Lagrange for Limit
-# modified for time uniform
-class RBFSolverGLQ10LagTime:
+# dual matching
+class RBFDual:
     def __init__(
             self,
             model_fn,
@@ -69,10 +67,18 @@ class RBFSolverGLQ10LagTime:
             x0 = self.correcting_x0_fn(x0)
         return x0
 
-    def model_fn(self, x, t):
+    def model_fn(self, x, t, dual=False):
         """
         Convert the model to the noise prediction model or the data prediction model.
         """
+
+        if dual:
+            noise = self.noise_prediction_fn(x, t)
+            alpha_t, sigma_t = self.noise_schedule.marginal_alpha(t), self.noise_schedule.marginal_std(t)
+            x0 = (x - sigma_t * noise) / alpha_t
+            if self.correcting_x0_fn is not None:
+                x0 = self.correcting_x0_fn(x0)
+            return noise, x0
 
         if self.predict_x0:
             return self.data_prediction_fn(x, t)
@@ -117,76 +123,29 @@ class RBFSolverGLQ10LagTime:
                 return (torch.exp(lambda_t) - torch.exp(lambda_s)) * torch.ones_like(lambdas)
             else:    
                 return (torch.exp(-lambda_s) - torch.exp(-lambda_t)) * torch.ones_like(lambdas)
-            
+
         h = lambda_t - lambda_s
         s = 1/(beta*h)
-        log_s = torch.log(s)
-
+        
         # closed-form
-        if log_s < 0:
-            def log_erf_diff(a, b):
-                return torch.log(torch.erfc(b)) + torch.log(1.0-torch.exp(torch.log(torch.erfc(a)) - torch.log(torch.erfc(b))))
-    
+        def log_erf_diff(a, b):
+            return torch.log(torch.erfc(b)) + torch.log(1.0-torch.exp(torch.log(torch.erfc(a)) - torch.log(torch.erfc(b))))
+        
+        if self.predict_x0:
             r_u = (lambdas - lambda_s) / h
             log_prefactor = lambda_t + torch.log(h) + ((s*h)**2/4 + h*(r_u-1)) + torch.log(0.5*np.sqrt(np.pi)*s)
             upper = (r_u + s**2*h/2)/s
             lower = (r_u + s**2*h/2 - 1)/s
             result = torch.exp(log_prefactor + log_erf_diff(upper, lower))
             return result.float()
-
-        # Gaussian-Legendre Quadrature 10-points
-        # Coefficients from from sympy.integrals.quadrature import gauss_legendre
-        else:    
-            x = torch.tensor([
-                -0.973906528517172,
-                -0.865063366688985,
-                -0.679409568299024,
-                -0.433395394129247,
-                -0.148874338981631,
-                0.148874338981631,
-                0.433395394129247,
-                0.679409568299024,
-                0.865063366688985,
-                0.973906528517172,
-                ], device=lambdas.device).to(torch.float64)
-            w = torch.tensor([
-                0.0666713443086881,
-                0.149451349150581,
-                0.219086362515982,
-                0.269266719309996,
-                0.295524224714753,
-                0.295524224714753,
-                0.269266719309996,
-                0.219086362515982,
-                0.149451349150581,
-                0.0666713443086881,
-                ], device=lambdas.device).to(torch.float64)
-            
-            def f1(lam):
-                return torch.exp(lam - beta**2*(lam-lambdas[None, :])**2)
-            def f2(lam):
-                return (lambda_t-lambda_s)/2 * f1(lam*(lambda_t-lambda_s)/2 + (lambda_s+lambda_t)/2)
-            
-            # (1, p) = (1, n) @ (n, p)
-            result = (w[None, :] @ f2(x[:, None]))[0]
-            
+        else:
+            r_u = (lambdas - lambda_s) / h
+            log_prefactor = -lambda_t + torch.log(h) + ((s*h)**2/4 + h*(1-r_u)) + torch.log(0.5*np.sqrt(np.pi)*s)
+            upper = (1 - r_u + s**2*h/2)/s
+            lower = (-r_u + s**2*h/2)/s
+            result = torch.exp(log_prefactor + log_erf_diff(upper, lower))
             return result.float()
 
-    def solve_linear_system(self, A, b):
-        import mpmath as mp
-
-        # solving Ax=b
-        device = A.device
-        A = A.data.cpu().numpy()
-        b = b.data.cpu().numpy()
-
-        mp.mp.prec = 500
-        A = mp.matrix(A.tolist())
-        b = mp.matrix(b.tolist())
-        x = mp.lu_solve(A, b)
-        x = torch.tensor([float(val) for val in x], dtype=torch.float64, device=device)
-        return x
-                
     def get_coefficients(self, lambda_s, lambda_t, lambdas, beta):
         lambda_s = lambda_s.to(torch.float64)
         lambda_t = lambda_t.to(torch.float64)
@@ -198,7 +157,7 @@ class RBFSolverGLQ10LagTime:
         integral1 = self.get_integral_vector(lambda_s, lambda_t, lambdas, beta)
         #print('integral1 :', lambda_s, beta, integral1)
         # (1,)
-        integral2 = self.get_integral_vector(lambda_s, lambda_t, lambdas[:1], beta=0)
+        integral2 = self.get_integral_vector(lambda_s, lambda_t, lambdas[:1], 0)
         
         # (p+1,)
         integral_aug = torch.cat([integral1, integral2], dim=0)
@@ -209,12 +168,7 @@ class RBFSolverGLQ10LagTime:
         kernel_aug = 1 - eye
         kernel_aug[:p, :p] = kernel
         # (p,)
-        #coefficients = (integral_aug[None, :] @ torch.linalg.pinv(kernel_aug))[0, :p]    
-        #coefficients = (integral_aug[None, :] @ torch.linalg.inv(kernel_aug))[0, :p]
         coefficients = torch.linalg.solve(kernel_aug, integral_aug)
-        #coefficients = torch.linalg.lstsq(kernel_aug, integral_aug).solution
-        #coefficients = self.solve_linear_system(kernel_aug, integral_aug)
-        #error = torch.mean(abs(integral_aug - kernel_aug @ coefficients)).item()
         coefficients = coefficients[:p]  # (p+1,) 중 앞 p개만 슬라이싱
         return coefficients.float()
 
@@ -296,8 +250,8 @@ class RBFSolverGLQ10LagTime:
         else:
             next_sample = signal_rates[i+1]/signal_rates[i]*sample - signal_rates[i+1]*data_sum
         return next_sample
-    
-    def get_loss_by_target_matching(self, i, steps, target, hist, log_scale, lambdas, p, corrector=False):
+
+    def get_loss_by_target_matching(self, x, i, noise_target, data_target, hist, signal_rates, noise_rates, log_scale, lambdas, p, corrector=False):
         beta = 1 / (np.exp(log_scale) * abs(lambdas[i+1] - lambdas[i]))
         lambda_array = torch.flip(lambdas[i-p+1:i+(2 if corrector else 1)], dims=[0])
         coeffs = self.get_coefficients(lambdas[i], lambdas[i+1], lambda_array, beta)
@@ -305,26 +259,29 @@ class RBFSolverGLQ10LagTime:
         datas = hist[i-p+1:i+(2 if corrector else 1)][::-1]
         data_sum = sum([coeff * data for coeff, data in zip(coeffs, datas)])
 
-        if self.predict_x0:
-            integral = (torch.exp(lambdas[i+1]) - torch.exp(lambdas[i]))
-        else:    
-            integral = (torch.exp(-lambdas[i]) - torch.exp(-lambdas[i+1]))
+        integral = (torch.exp(lambdas[i+1]) - torch.exp(lambdas[i]))
         pred = data_sum / integral
+        data_loss = F.mse_loss(data_target, pred)
 
-        loss = F.mse_loss(target, pred)
-        return loss, coeffs
+        a = (signal_rates[i+1]/signal_rates[i] - noise_rates[i+1]/noise_rates[i])*x
+        integral = (torch.exp(-lambdas[i]) - torch.exp(-lambdas[i+1]))
+        pred = (a - noise_rates[i+1]*data_sum) / (signal_rates[i+1]*integral)
+        noise_loss = F.mse_loss(noise_target, pred)
 
-    def sample_by_target_matching(self, x, target,
+        return data_loss, noise_loss
+
+    def sample_by_target_matching(self, noise_target, data_target,
                                   steps, t_start, t_end, order=3, skip_type='logSNR',
                                   method='data_prediction', lower_order_final=True):
         print('def sample_by_target_matching start!!!')
-        print(f"x.shape: {x.shape}, target.shape: {target.shape}, steps: {steps}, order: {order}, skip_type: {skip_type}, lower_order_final: {lower_order_final}")
+        print(f"noise_target.shape: {noise_target.shape}, data_target.shape: {data_target.shape}, steps: {steps}, order: {order}, skip_type: {skip_type}, lower_order_final: {lower_order_final}")
         # 샘플링할 시간 범위 설정 (t_0, t_T)
         # diffusion 모델의 경우 t=1(혹은 T)에서 x는 가우시안 노이즈 상태라고 가정.
         t_0 = 1.0 / self.noise_schedule.total_N if t_end is None else t_end
         t_T = self.noise_schedule.T if t_start is None else t_start
 
         # 텐서가 올라갈 디바이스 설정
+        x = noise_target
         device = x.device
         
         # 샘플링 과정에서 gradient 계산은 하지 않으므로 no_grad()
@@ -345,9 +302,14 @@ class RBFSolverGLQ10LagTime:
             hist[0] = self.model_fn(x, timesteps[0])   # model(x,t) 평가값을 저장
             
             pred_losses_list = []
+            pred_data_losses_list = []
+            pred_noise_losses_list = []
+
             corr_losses_list = []
-            pred_coeffs_list = []
-            lag_coeffs_list = []
+            corr_data_losses_list = []
+            corr_noise_losses_list = []
+
+            r = 0.999
             for i in range(0, steps):
                 if lower_order_final:
                     p = min(i+1, steps - i, order)
@@ -356,17 +318,19 @@ class RBFSolverGLQ10LagTime:
                     
                 # ===predictor===
                 pred_losses = []
-                pred_coeffs = []
+                pred_data_losses = []
+                pred_noise_losses = []
                 for log_scale in log_scales:
-                    loss, coeffs = self.get_loss_by_target_matching(i, steps, target, hist, log_scale, lambdas, p, corrector=False)
+                    data_loss, noise_loss = self.get_loss_by_target_matching(x, i, noise_target, data_target, hist, signal_rates, noise_rates, log_scale, lambdas, p, corrector=False)
+                    loss = data_loss * r + noise_loss * (1-r)
                     pred_losses.append(loss.detach().item())
-                    pred_coeffs.append(coeffs)
-
-                lambda_array = torch.flip(lambdas[i-p+1:i+1], dims=[0])
-                coeffs = self.get_lag_coefficients(lambdas[i], lambdas[i+1], lambda_array)
-                lag_coeffs_list.append(coeffs)
-
+                    pred_data_losses.append(data_loss.detach().item())
+                    pred_noise_losses.append(noise_loss.detach().item())
+                    
                 pred_losses_list.append(np.stack(pred_losses))
+                pred_data_losses_list.append(np.stack(pred_data_losses))
+                pred_noise_losses_list.append(np.stack(pred_noise_losses))
+
                 argmin = np.stack(pred_losses).argmin()
                 optimal_log_scale = log_scales[argmin]
                 optimal_log_scales_p.append(optimal_log_scale)
@@ -384,11 +348,19 @@ class RBFSolverGLQ10LagTime:
                 
                 # ===corrector===
                 corr_losses = []
+                corr_data_losses = []
+                corr_noise_losses = []
                 for log_scale in log_scales:
-                    loss, _ = self.get_loss_by_target_matching(i, steps, target, hist, log_scale, lambdas, p, corrector=True)
+                    data_loss, noise_loss = self.get_loss_by_target_matching(x, i, noise_target, data_target, hist, signal_rates, noise_rates, log_scale, lambdas, p, corrector=True)
+                    loss = data_loss * r + noise_loss * (1-r)
                     corr_losses.append(loss.detach().item())
+                    corr_data_losses.append(data_loss.detach().item())
+                    corr_noise_losses.append(noise_loss.detach().item())
 
                 corr_losses_list.append(np.stack(corr_losses))
+                corr_data_losses_list.append(np.stack(corr_data_losses))
+                corr_noise_losses_list.append(np.stack(corr_noise_losses))
+
                 argmin = np.stack(corr_losses).argmin()
                 optimal_log_scale = log_scales[argmin]
                 optimal_log_scales_c.append(optimal_log_scale)
@@ -404,12 +376,16 @@ class RBFSolverGLQ10LagTime:
 
         if self.scale_dir is not None:
             save_file = os.path.join(self.scale_dir, f'NFE={steps},p={order}.npz')
+
             np.savez(save_file,
                      optimal_log_scales=optimal_log_scales,
                      pred_losses_list=pred_losses_list,
+                     pred_data_losses_list=pred_data_losses_list,
+                     pred_noise_losses_list=pred_noise_losses_list,
                      corr_losses_list=corr_losses_list,
-                     pred_coeffs_list=pred_coeffs_list,
-                     lag_coeffs_list=lag_coeffs_list)
+                     corr_data_losses_list=corr_data_losses_list,
+                     corr_noise_losses_list=corr_noise_losses_list,
+                     )
             print(save_file, ' saved!')
 
         # 최종적으로 x를 반환
@@ -435,7 +411,9 @@ class RBFSolverGLQ10LagTime:
         # log_scales : predictor, corrector, step별로 적용할 log_scale array, shape : (2, NFE)
 
         log_scales = self.load_optimal_log_scales(steps, order)
-
+        if log_scales is None:
+            raise ValueError(f"Failed to load optimal log scales for steps={steps} and order={order}.")
+        
         t_0 = 1.0 / self.noise_schedule.total_N if t_end is None else t_end
         t_T = self.noise_schedule.T if t_start is None else t_start
         

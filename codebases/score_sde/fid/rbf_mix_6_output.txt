@@ -1,0 +1,3 @@
+name : rbf_mix
+step : 6
+FID  : 16.49643898010254

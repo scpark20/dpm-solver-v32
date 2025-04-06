@@ -1,0 +1,3 @@
+name : rbf_mix_optimal
+step : 12
+FID  : 6.850258827209473

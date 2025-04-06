@@ -138,7 +138,7 @@ def sample(config, ckp_path, statistics_dir, eval_folder="samples", sample_dir="
     os.makedirs(this_sample_dir, exist_ok=True)
     logging.info(this_sample_dir)
     num_sampling_rounds = config.eval.num_samples // config.eval.batch_size + 1
-    for r in range(num_sampling_rounds):
+    for r in range(1):
         ret = sampling_fn()
         if len(ret) == 2:
             samples_raw, n = ret

@@ -1,0 +1,3 @@
+name : rbf_dual
+step : 10
+FID  : 10.513474464416504

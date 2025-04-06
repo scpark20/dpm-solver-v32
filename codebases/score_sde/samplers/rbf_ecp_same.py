@@ -5,10 +5,8 @@ import numpy as np
 from .utils import expand_dims
 import math
 
-# Gaussian-Legendre Quadrature
-# Lagrange for Limit
-# modified for time uniform
-class RBFSolverGLQ10LagTime:
+# ECP-Same
+class RBFSolverECPSame:
     def __init__(
             self,
             model_fn,
@@ -20,7 +18,7 @@ class RBFSolverGLQ10LagTime:
             scale_dir=None,
             log_scale_min=-2.0,
             log_scale_max=2.0,
-            log_scale_num=100
+            log_scale_num=33
     ):
         self.model = lambda x, t: model_fn(x, t.expand((x.shape[0])))
         self.noise_schedule = noise_schedule
@@ -297,22 +295,44 @@ class RBFSolverGLQ10LagTime:
             next_sample = signal_rates[i+1]/signal_rates[i]*sample - signal_rates[i+1]*data_sum
         return next_sample
     
-    def get_loss_by_target_matching(self, i, steps, target, hist, log_scale, lambdas, p, corrector=False):
-        beta = 1 / (np.exp(log_scale) * abs(lambdas[i+1] - lambdas[i]))
-        lambda_array = torch.flip(lambdas[i-p+1:i+(2 if corrector else 1)], dims=[0])
-        coeffs = self.get_coefficients(lambdas[i], lambdas[i+1], lambda_array, beta)
-        
-        datas = hist[i-p+1:i+(2 if corrector else 1)][::-1]
-        data_sum = sum([coeff * data for coeff, data in zip(coeffs, datas)])
+    def get_loss_by_target_matching(self, i, target, hist, log_scale_p, log_scale_c, lambdas, p, p_prev):
+        if log_scale_c is not None:
+            # for predictor
+            beta = 1 / (np.exp(log_scale_p) * abs(lambdas[i+1] - lambdas[i]))
+            lambda_array = torch.flip(lambdas[i-p+1:i+1], dims=[0])
+            coeffs = self.get_coefficients(lambdas[i], lambdas[i+1], lambda_array, beta)
+            datas = hist[i-p+1:i+1][::-1]
+            pred = sum([coeff * data for coeff, data in zip(coeffs, datas)])
 
-        if self.predict_x0:
-            integral = (torch.exp(lambdas[i+1]) - torch.exp(lambdas[i]))
-        else:    
-            integral = (torch.exp(-lambdas[i]) - torch.exp(-lambdas[i+1]))
-        pred = data_sum / integral
+            # for corrector
+            beta = 1 / (np.exp(log_scale_c) * abs(lambdas[i] - lambdas[i-1]))
+            lambda_array = torch.flip(lambdas[(i-1)-p_prev+1:(i-1)+2], dims=[0])
+            coeffs = self.get_coefficients(lambdas[(i-1)], lambdas[(i-1)+1], lambda_array, beta)
+            datas = hist[(i-1)-p_prev+1:(i-1)+2][::-1]
+            corr = sum([coeff * data for coeff, data in zip(coeffs, datas)])
 
-        loss = F.mse_loss(target, pred)
-        return loss, coeffs
+            if self.predict_x0:
+                integral = (torch.exp(lambdas[i+1]) - torch.exp(lambdas[i-1]))
+            else:    
+                integral = (torch.exp(-lambdas[i-1]) - torch.exp(-lambdas[i+1]))
+            
+            loss = F.mse_loss(target, (pred + corr)/integral)
+        else:
+            # for predictor
+            beta = 1 / (np.exp(log_scale_p) * abs(lambdas[i+1] - lambdas[i]))
+            lambda_array = torch.flip(lambdas[i-p+1:i+1], dims=[0])
+            coeffs = self.get_coefficients(lambdas[i], lambdas[i+1], lambda_array, beta)
+            datas = hist[i-p+1:i+1][::-1]
+            pred = sum([coeff * data for coeff, data in zip(coeffs, datas)])
+
+            if self.predict_x0:
+                integral = (torch.exp(lambdas[i+1]) - torch.exp(lambdas[i]))
+            else:    
+                integral = (torch.exp(-lambdas[i]) - torch.exp(-lambdas[i+1]))
+            
+            loss = F.mse_loss(target, pred/integral)
+
+        return loss
 
     def sample_by_target_matching(self, x, target,
                                   steps, t_start, t_end, order=3, skip_type='logSNR',
@@ -338,78 +358,59 @@ class RBFSolverGLQ10LagTime:
             noise_rates = torch.Tensor([self.noise_schedule.marginal_std(t) for t in timesteps])
 
             log_scales = np.linspace(self.log_scale_min, self.log_scale_max, self.log_scale_num)
-            optimal_log_scales_p = []
-            optimal_log_scales_c = []
+            optimal_log_scales = np.zeros((2, steps))
+            loss_line_list = []
             
             hist = [None for _ in range(steps)]
-            hist[0] = self.model_fn(x, timesteps[0])   # model(x,t) 평가값을 저장
-            
-            pred_losses_list = []
-            corr_losses_list = []
-            pred_coeffs_list = []
-            lag_coeffs_list = []
+            x_pred = x
+            p_prev = None
             for i in range(0, steps):
                 if lower_order_final:
                     p = min(i+1, steps - i, order)
                 else:
                     p = min(i+1, order)
+
+                # ===Evaluation===
+                hist[i] = self.model_fn(x_pred, timesteps[i])
+
+                if i > 0: # Line Search
+                    loss_line = np.full(self.log_scale_num, np.inf)
+                    for index, log_scale in enumerate(log_scales):
+                        loss = self.get_loss_by_target_matching(i, target, hist, log_scale, log_scale, lambdas, p, p_prev)
+                        loss_line[index] = loss.item()
+                    min_index = np.argmin(loss_line)
+                    optimal_log_scales[0, i] = optimal_log_scales[1, i-1] = log_scales[min_index]
+                    loss_line_list.append(loss_line)
                     
+                else: # Line Search
+                    loss_line = np.full(self.log_scale_num, np.inf)
+                    for index, log_scale in enumerate(log_scales):
+                        loss = self.get_loss_by_target_matching(i, target, hist, log_scale, None, lambdas, p, p_prev)
+                        loss_line[index] = loss.item()
+                    min_index = np.argmin(loss_line)
+                    optimal_log_scales[0, i] = log_scales[min_index]
+                    loss_line_list.append(loss_line)
+
+                if i > 0:
+                    # ===Corrector===
+                    log_s = optimal_log_scales[1, i-1]
+                    beta = 1 / (np.exp(log_s) * abs(lambdas[i] - lambdas[i-1]))
+                    lagrange = (log_s >= self.log_scale_max)
+                    x = self.get_next_sample(x, i-1, hist, signal_rates, noise_rates, lambdas, p_prev, beta, corrector=True, lagrange=lagrange)
+                        
                 # ===predictor===
-                pred_losses = []
-                pred_coeffs = []
-                for log_scale in log_scales:
-                    loss, coeffs = self.get_loss_by_target_matching(i, steps, target, hist, log_scale, lambdas, p, corrector=False)
-                    pred_losses.append(loss.detach().item())
-                    pred_coeffs.append(coeffs)
-
-                lambda_array = torch.flip(lambdas[i-p+1:i+1], dims=[0])
-                coeffs = self.get_lag_coefficients(lambdas[i], lambdas[i+1], lambda_array)
-                lag_coeffs_list.append(coeffs)
-
-                pred_losses_list.append(np.stack(pred_losses))
-                argmin = np.stack(pred_losses).argmin()
-                optimal_log_scale = log_scales[argmin]
-                optimal_log_scales_p.append(optimal_log_scale)
-                beta = 1 / (np.exp(optimal_log_scale) * abs(lambdas[i+1] - lambdas[i]))
-                lagrange = (optimal_log_scale >= self.log_scale_max)
-                x_pred = self.get_next_sample(x, i, hist, signal_rates, noise_rates, lambdas,
-                                            p=p, beta=beta, corrector=False, lagrange=lagrange)
-                
-                if i == steps - 1:
-                    x = x_pred
-                    break
-                
-                # predictor로 구한 x_pred를 이용해서 model_fn 평가
-                hist[i+1] = self.model_fn(x_pred, timesteps[i+1])
-                
-                # ===corrector===
-                corr_losses = []
-                for log_scale in log_scales:
-                    loss, _ = self.get_loss_by_target_matching(i, steps, target, hist, log_scale, lambdas, p, corrector=True)
-                    corr_losses.append(loss.detach().item())
-
-                corr_losses_list.append(np.stack(corr_losses))
-                argmin = np.stack(corr_losses).argmin()
-                optimal_log_scale = log_scales[argmin]
-                optimal_log_scales_c.append(optimal_log_scale)
-                beta = 1 / (np.exp(optimal_log_scale) * abs(lambdas[i+1] - lambdas[i]))
-                lagrange = (optimal_log_scale >= self.log_scale_max)
-                x_corr = self.get_next_sample(x, i, hist, signal_rates, noise_rates, lambdas,
-                                            p=p, beta=beta, corrector=True, lagrange=lagrange)
-                x = x_corr
-            
-        optimal_log_scales_p = np.array(optimal_log_scales_p)
-        optimal_log_scales_c = np.array(optimal_log_scales_c + [0.0])
-        optimal_log_scales = np.stack([optimal_log_scales_p, optimal_log_scales_c], axis=0)
+                log_s = optimal_log_scales[0, i]
+                beta = 1 / (np.exp(log_s) * abs(lambdas[i+1] - lambdas[i]))
+                lagrange = (log_s >= self.log_scale_max)
+                x_pred = self.get_next_sample(x, i, hist, signal_rates, noise_rates, lambdas, p, beta, corrector=False, lagrange=lagrange)
+                p_prev = p
+            x = x_pred
 
         if self.scale_dir is not None:
             save_file = os.path.join(self.scale_dir, f'NFE={steps},p={order}.npz')
             np.savez(save_file,
                      optimal_log_scales=optimal_log_scales,
-                     pred_losses_list=pred_losses_list,
-                     corr_losses_list=corr_losses_list,
-                     pred_coeffs_list=pred_coeffs_list,
-                     lag_coeffs_list=lag_coeffs_list)
+                     loss_line_list=loss_line_list)
             print(save_file, ' saved!')
 
         # 최종적으로 x를 반환
