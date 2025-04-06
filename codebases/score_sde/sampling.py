@@ -30,6 +30,8 @@ from samplers.utils import NoiseScheduleVP
 from samplers.dpm_solver import DPM_Solver
 from samplers.uni_pc import UniPC
 from samplers.rbf import RBFSolverGLQ10LagTime
+from samplers.rbf_const import RBFSolverConst
+from samplers.rbf_const_grid import RBFSolverConstGrid
 from samplers.rbf_ecp import RBFSolverECP
 from samplers.rbf_ecp_same import RBFSolverECPSame
 from samplers.rbf_dual import RBFDual
@@ -188,6 +190,48 @@ def get_sampling_fn(config, sde, shape, inverse_scaler, target_matching=False, r
             target_matching=target_matching,
             scale_dir=scale_dir,
         )
+
+    elif sampler_name.lower() == "rbf_const":
+        sampling_fn = get_rbf_const_sampler(
+            sde=sde,
+            shape=shape,
+            inverse_scaler=inverse_scaler,
+            steps=config.sampling.steps,
+            eps=config.sampling.eps,
+            skip_type=config.sampling.skip_type,
+            method=config.sampling.uni_pc_method,
+            order=config.sampling.order,
+            denoise=config.sampling.noise_removal,
+            algorithm_type=config.sampling.uni_pc_algorithm_type,
+            thresholding=config.sampling.thresholding,
+            rtol=config.sampling.rtol,
+            variant=config.sampling.variant,
+            lower_order_final=config.sampling.lower_order_final,
+            device=config.device,
+            target_matching=target_matching,
+            scale_dir=scale_dir,
+        )    
+
+    elif sampler_name.lower() == "rbf_const_grid":
+        sampling_fn = get_rbf_const_grid_sampler(
+            sde=sde,
+            shape=shape,
+            inverse_scaler=inverse_scaler,
+            steps=config.sampling.steps,
+            eps=config.sampling.eps,
+            skip_type=config.sampling.skip_type,
+            method=config.sampling.uni_pc_method,
+            order=config.sampling.order,
+            denoise=config.sampling.noise_removal,
+            algorithm_type=config.sampling.uni_pc_algorithm_type,
+            thresholding=config.sampling.thresholding,
+            rtol=config.sampling.rtol,
+            variant=config.sampling.variant,
+            lower_order_final=config.sampling.lower_order_final,
+            device=config.device,
+            target_matching=target_matching,
+            scale_dir=scale_dir,
+        )        
 
     elif sampler_name.lower() == "rbf_ecp":
         sampling_fn = get_rbf_ecp_sampler(
@@ -942,6 +986,176 @@ def get_rbf_sampler(
             return inverse_scaler(x), steps
 
     return rbf_sampler
+
+def get_rbf_const_sampler(
+    sde,
+    shape,
+    inverse_scaler,
+    steps=10,
+    eps=1e-3,
+    skip_type="logSNR",
+    method="multistep",
+    order=3,
+    denoise=False,
+    algorithm_type="data_prediction",
+    thresholding=False,
+    rtol=0.05,
+    atol=0.0078,
+    variant="bh1",
+    lower_order_final=True,
+    device="cuda",
+    target_matching=False,
+    scale_dir=None,
+):
+    """Create a UniPC sampler.
+    Args:
+      sde: An `sde_lib.SDE` object representing the forward SDE.
+      shape: A sequence of integers. The expected shape of a single sample.
+      predictor: A subclass of `sampling.Predictor` representing the predictor algorithm.
+      corrector: A subclass of `sampling.Corrector` representing the corrector algorithm.
+      inverse_scaler: The inverse data normalizer.
+      snr: A `float` number. The signal-to-noise ratio for configuring correctors.
+      n_steps: An integer. The number of corrector steps per predictor update.
+      probability_flow: If `True`, solve the reverse-time probability flow ODE when running the predictor.
+      continuous: `True` indicates that the score model was continuously trained.
+      denoise: If `True`, add one-step denoising to the final samples.
+      eps: A `float` number. The reverse-time SDE and ODE are integrated to `epsilon` to avoid numerical issues.
+      variant: [bh1, bh2, vary_coeff], decide which variant of UniPC is used
+      device: PyTorch device.
+    Returns:
+      A sampling function that returns samples and the number of function evaluations during sampling.
+    """
+    ns = NoiseScheduleVP("linear", continuous_beta_0=sde.beta_0, continuous_beta_1=sde.beta_1)
+
+    def rbf_const_sampler(model, prior=None, target=None):
+        """The RBF sampler funciton.
+        Args:
+          model: A score model.
+        Returns:
+          Samples, number of function evaluations.
+        """
+        with torch.no_grad():
+            noise_pred_fn = get_noise_fn(sde, model, train=False, continuous=True)
+            rbf = RBFSolverConst(
+                noise_pred_fn,
+                ns,
+                algorithm_type=algorithm_type,
+                correcting_x0_fn="dynamic_thresholding" if thresholding else None,
+                scale_dir=scale_dir,
+            )
+            # Initial sample
+            x = sde.prior_sampling(shape).to(device)
+            if not target_matching:
+                x = rbf.sample(
+                    x,
+                    steps=steps - 1 if denoise else steps,
+                    t_start=sde.T,
+                    t_end=eps,
+                    order=order,
+                    skip_type=skip_type,
+                    method=method,
+                    lower_order_final=lower_order_final,
+                )
+            else:
+                x = rbf.sample_by_target_matching(
+                    prior,
+                    target=target,
+                    steps=steps - 1 if denoise else steps,
+                    t_start=sde.T,
+                    t_end=eps,
+                    order=order,
+                    skip_type=skip_type,
+                    method=method,
+                    lower_order_final=lower_order_final,
+                )
+            return inverse_scaler(x), steps
+
+    return rbf_const_sampler
+
+def get_rbf_const_grid_sampler(
+    sde,
+    shape,
+    inverse_scaler,
+    steps=10,
+    eps=1e-3,
+    skip_type="logSNR",
+    method="multistep",
+    order=3,
+    denoise=False,
+    algorithm_type="data_prediction",
+    thresholding=False,
+    rtol=0.05,
+    atol=0.0078,
+    variant="bh1",
+    lower_order_final=True,
+    device="cuda",
+    target_matching=False,
+    scale_dir=None,
+):
+    """Create a UniPC sampler.
+    Args:
+      sde: An `sde_lib.SDE` object representing the forward SDE.
+      shape: A sequence of integers. The expected shape of a single sample.
+      predictor: A subclass of `sampling.Predictor` representing the predictor algorithm.
+      corrector: A subclass of `sampling.Corrector` representing the corrector algorithm.
+      inverse_scaler: The inverse data normalizer.
+      snr: A `float` number. The signal-to-noise ratio for configuring correctors.
+      n_steps: An integer. The number of corrector steps per predictor update.
+      probability_flow: If `True`, solve the reverse-time probability flow ODE when running the predictor.
+      continuous: `True` indicates that the score model was continuously trained.
+      denoise: If `True`, add one-step denoising to the final samples.
+      eps: A `float` number. The reverse-time SDE and ODE are integrated to `epsilon` to avoid numerical issues.
+      variant: [bh1, bh2, vary_coeff], decide which variant of UniPC is used
+      device: PyTorch device.
+    Returns:
+      A sampling function that returns samples and the number of function evaluations during sampling.
+    """
+    ns = NoiseScheduleVP("linear", continuous_beta_0=sde.beta_0, continuous_beta_1=sde.beta_1)
+
+    def rbf_const_grid_sampler(model, prior=None, target=None):
+        """The RBF sampler funciton.
+        Args:
+          model: A score model.
+        Returns:
+          Samples, number of function evaluations.
+        """
+        with torch.no_grad():
+            noise_pred_fn = get_noise_fn(sde, model, train=False, continuous=True)
+            rbf = RBFSolverConstGrid(
+                noise_pred_fn,
+                ns,
+                algorithm_type=algorithm_type,
+                correcting_x0_fn="dynamic_thresholding" if thresholding else None,
+                scale_dir=scale_dir,
+            )
+            # Initial sample
+            x = sde.prior_sampling(shape).to(device)
+            if not target_matching:
+                x = rbf.sample(
+                    x,
+                    steps=steps - 1 if denoise else steps,
+                    t_start=sde.T,
+                    t_end=eps,
+                    order=order,
+                    skip_type=skip_type,
+                    method=method,
+                    lower_order_final=lower_order_final,
+                )
+            else:
+                x = rbf.sample_by_target_matching(
+                    prior,
+                    target=target,
+                    steps=steps - 1 if denoise else steps,
+                    t_start=sde.T,
+                    t_end=eps,
+                    order=order,
+                    skip_type=skip_type,
+                    method=method,
+                    lower_order_final=lower_order_final,
+                )
+            return inverse_scaler(x), steps
+
+    return rbf_const_grid_sampler
 
 def get_rbf_ecp_sampler(
     sde,

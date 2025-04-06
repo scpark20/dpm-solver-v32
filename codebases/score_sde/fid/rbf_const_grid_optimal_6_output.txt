@@ -1,0 +1,3 @@
+name : rbf_const_grid_optimal
+step : 6
+FID  : 10.897849082946777
