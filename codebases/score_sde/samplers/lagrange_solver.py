@@ -193,6 +193,8 @@ class LagrangeSolver:
             signal_rates = torch.Tensor([self.noise_schedule.marginal_alpha(t) for t in timesteps])
             noise_rates = torch.Tensor([self.noise_schedule.marginal_std(t) for t in timesteps])
             
+            xs = [None for _ in range(steps)]
+            xs[0] = x
             hist = [None for _ in range(steps)]
             hist[0] = self.model_fn(x, timesteps[0])   # model(x,t) 평가값을 저장
             
@@ -217,5 +219,7 @@ class LagrangeSolver:
                 x_corr = self.get_next_sample(x, i, hist, signal_rates, noise_rates, lambdas,
                                               p=p, corrector=True)
                 x = x_corr
+                xs[i] = x
+            xs[-1] = x
         # 최종적으로 x를 반환
-        return x
+        return x, torch.stack([h.cpu() for h in hist], dim=1), torch.stack([h.cpu() for h in xs], dim=1)

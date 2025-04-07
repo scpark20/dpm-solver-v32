@@ -298,14 +298,14 @@ class RBFSolverConst:
     def sample_by_target_matching(self, x, target,
                                   steps, t_start, t_end, order=3, skip_type='logSNR',
                                   method='data_prediction', lower_order_final=True):
-        x = x[:2]
-        target = target[:2]
-
+        #x = x[:64]
+        #target = target[:64]
+        
         log_scales = np.linspace(self.log_scale_min, self.log_scale_max, self.log_scale_num)
         losses = []
         from tqdm import tqdm
         for log_scale in tqdm(log_scales):
-            y = self.sample(x, steps, t_start, t_end, order, skip_type, method, lower_order_final, log_scale, log_scale)
+            y = self.sample(x, steps, t_start, t_end, order, skip_type, method, lower_order_final, log_scale, log_scale, load=False)
             loss = F.mse_loss(target, y)
             losses.append(loss.detach().item())
         optimal_log_scale = log_scales[np.argmin(losses)]
@@ -335,11 +335,11 @@ class RBFSolverConst:
                lower_order_final=True,
                 log_scale_p=2.0,
                 log_scale_c=0.0,
+                load=True
                 ):
         # log_scale : predictor, corrector 모든 step에 적용할 log_scale, log_scales가 load안되면 log_scale로 작동
         # log_scales : predictor, corrector, step별로 적용할 log_scale array, shape : (2, NFE)
-
-        log_scale = self.load_optimal_log_scale(steps, order)
+        log_scale = self.load_optimal_log_scale(steps, order) if load else None
 
         t_0 = 1.0 / self.noise_schedule.total_N if t_end is None else t_end
         t_T = self.noise_schedule.T if t_start is None else t_start

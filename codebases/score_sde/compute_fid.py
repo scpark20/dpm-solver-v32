@@ -11,7 +11,6 @@ from tqdm import tqdm
 inception_model = get_inception_model(inceptionv3=False)
 BATCH_SIZE = 1000
 
-
 def load_cifar10_stats():
     """Load the pre-computed dataset statistics."""
     filename = "/data/checkpoints/cifar10_stats.npz"
@@ -47,8 +46,8 @@ def compute_fid(path):
     fid = tfgan.eval.frechet_classifier_distance_from_activations(data_pools, all_pools)
     return fid
 
-names = ["rbf_const_optimal", 'rbf_const_grid_optimal']
-steps = [5, 6, 8, 10]
+names = ["rbf_const_optimal"]
+steps = [5, 6, 8, 10, 12]
 
 if not os.path.isdir('fid'):
     os.makedirs('fid')

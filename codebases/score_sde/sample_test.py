@@ -142,8 +142,8 @@ def sample(config, ckp_path, statistics_dir, eval_folder="samples", sample_dir="
         ret = sampling_fn()
         if len(ret) == 2:
             samples_raw, n = ret
-        elif len(ret) == 3:
-            samples_raw, n, prior = ret
+        elif len(ret) == 6:
+            samples_raw, n, prior, target, hist, xt = ret
         logging.info("sampling -- round: %d (NFE %d)" % (r, n))
         samples = np.clip(samples_raw.permute(0, 2, 3, 1).cpu().numpy() * 255.0, 0, 255).astype(np.uint8)
         samples = samples.reshape((-1, config.data.image_size, config.data.image_size, config.data.num_channels))
@@ -151,11 +151,15 @@ def sample(config, ckp_path, statistics_dir, eval_folder="samples", sample_dir="
             np.savez_compressed(os.path.join(this_sample_dir, f"samples_{r}.npz"),
                                 samples=samples,
                                 samples_raw=samples_raw.cpu())
-        elif len(ret) == 3:
+        elif len(ret) == 6:
             np.savez_compressed(os.path.join(this_sample_dir, f"samples_{r}.npz"),
                                 samples=samples,
                                 samples_raw=samples_raw.cpu(),
-                                prior=prior.cpu())
+                                prior=prior.cpu(),
+                                target=target.cpu(),
+                                hist=hist.cpu(),
+                                xt=xt.cpu(),
+                                )
 
         if r == 0:
             nrow = int(np.sqrt(samples_raw.shape[0]))

@@ -1,3 +1,3 @@
 name : rbf_const_optimal
 step : 6
-FID  : 10.862910270690918
+FID  : 11.233920097351074
