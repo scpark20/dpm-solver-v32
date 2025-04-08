@@ -5,8 +5,8 @@ import numpy as np
 from .utils import expand_dims
 import math
 
-# SPD
-class RBFSolverSPD:
+# SPD xt
+class RBFSolverSPDXt:
     def __init__(
             self,
             model_fn,
@@ -277,26 +277,35 @@ class RBFSolverSPD:
             next_sample = signal_rates[i+1]/signal_rates[i]*sample - signal_rates[i+1]*data_sum
         return next_sample
     
-    def get_loss_by_target_matching(self, i, steps, target, hist, log_scale, lambdas, p, corrector=False):
-        beta = 1 / (np.exp(log_scale) * abs(lambdas[i+1] - lambdas[i]))
-        lambda_array = torch.flip(lambdas[i-p+1:i+(2 if corrector else 1)], dims=[0])
-        coeffs = self.get_coefficients(lambdas[i], lambdas[i+1], lambda_array, beta)
+    def time_linear_interpolate_simple(self, x: torch.Tensor, t2: int) -> torch.Tensor:
+        B, T, C, H, W = x.shape
+    
+        # 첫 번째 지점: floor(T/t2) - 1 (단, 0 이상으로 보정)
+        start_idx = math.floor(T / t2) - 1
+        start_idx = max(start_idx, 0)
         
-        datas = hist[i-p+1:i+(2 if corrector else 1)][::-1]
-        data_sum = sum([coeff * data for coeff, data in zip(coeffs, datas)])
+        # 마지막 지점: T - 1
+        end_idx = T - 1
 
-        if self.predict_x0:
-            integral = (torch.exp(lambdas[i+1]) - torch.exp(lambdas[i]))
-        else:    
-            integral = (torch.exp(-lambdas[i]) - torch.exp(-lambdas[i+1]))
-        pred = data_sum / integral
-
-        loss = F.mse_loss(target, pred)
-        return loss, coeffs
-
+        # 위 두 지점을 포함하여 t2개를 선형보간 기준으로 뽑는다
+        t_lin = torch.linspace(start_idx, end_idx, steps=t2, device=x.device)
+        print(t_lin)
+        
+        # 아래는 기존 보간 로직과 동일
+        floor_idx = t_lin.floor().long()
+        alpha = t_lin - floor_idx.float()
+        ceil_idx = (floor_idx + 1).clamp(max=T - 1)
+        
+        x_left = x[:, floor_idx]   # (B, t2, C, H, W)
+        x_right = x[:, ceil_idx]   # (B, t2, C, H, W)
+        
+        alpha = alpha.view(1, t2, 1, 1, 1)
+        return x_left * (1 - alpha) + x_right * alpha
+    
     def sample_by_target_matching(self, x, target,
                                   steps, t_start, t_end, order=3, skip_type='logSNR',
                                   method='data_prediction', lower_order_final=True):
+        target = self.time_linear_interpolate_simple(target, steps)
         print('def sample_by_target_matching start!!!')
         print(f"x.shape: {x.shape}, target.shape: {target.shape}, steps: {steps}, order: {order}, skip_type: {skip_type}, lower_order_final: {lower_order_final}")
         # 샘플링할 시간 범위 설정 (t_0, t_T)
@@ -326,8 +335,6 @@ class RBFSolverSPD:
             
             pred_losses_list = []
             corr_losses_list = []
-            pred_coeffs_list = []
-            lag_coeffs_list = []
             for i in range(0, steps):
                 if lower_order_final:
                     p = min(i+1, steps - i, order)
@@ -336,24 +343,19 @@ class RBFSolverSPD:
                     
                 # ===predictor===
                 pred_losses = []
-                pred_coeffs = []
                 for log_scale in log_scales:
-                    loss, coeffs = self.get_loss_by_target_matching(i, steps, target, hist, log_scale, lambdas, p, corrector=False)
+                    beta = 1 / (np.exp(log_scale) * abs(lambdas[i+1] - lambdas[i]))
+                    x_pred = self.get_next_sample(x, i, hist, signal_rates, noise_rates, lambdas, p=p, beta=beta, corrector=False, lagrange=False)
+                    loss = F.mse_loss(target[:, i], x_pred)
                     pred_losses.append(loss.detach().item())
-                    pred_coeffs.append(coeffs)
+                pred_losses_list.append(np.stack(pred_losses))    
 
-                lambda_array = torch.flip(lambdas[i-p+1:i+1], dims=[0])
-                coeffs = self.get_lag_coefficients(lambdas[i], lambdas[i+1], lambda_array)
-                lag_coeffs_list.append(coeffs)
-
-                pred_losses_list.append(np.stack(pred_losses))
                 argmin = np.stack(pred_losses).argmin()
                 optimal_log_scale = log_scales[argmin]
                 optimal_log_scales_p.append(optimal_log_scale)
                 beta = 1 / (np.exp(optimal_log_scale) * abs(lambdas[i+1] - lambdas[i]))
                 lagrange = (optimal_log_scale >= self.log_scale_max)
-                x_pred = self.get_next_sample(x, i, hist, signal_rates, noise_rates, lambdas,
-                                            p=p, beta=beta, corrector=False, lagrange=lagrange)
+                x_pred = self.get_next_sample(x, i, hist, signal_rates, noise_rates, lambdas, p=p, beta=beta, corrector=False, lagrange=lagrange)
                 
                 if i == steps - 1:
                     x = x_pred
@@ -365,17 +367,18 @@ class RBFSolverSPD:
                 # ===corrector===
                 corr_losses = []
                 for log_scale in log_scales:
-                    loss, _ = self.get_loss_by_target_matching(i, steps, target, hist, log_scale, lambdas, p, corrector=True)
+                    beta = 1 / (np.exp(log_scale) * abs(lambdas[i+1] - lambdas[i]))
+                    x_corr = self.get_next_sample(x, i, hist, signal_rates, noise_rates, lambdas, p=p, beta=beta, corrector=True, lagrange=False)
+                    loss = F.mse_loss(target[:, i], x_corr)
                     corr_losses.append(loss.detach().item())
-
                 corr_losses_list.append(np.stack(corr_losses))
+
                 argmin = np.stack(corr_losses).argmin()
                 optimal_log_scale = log_scales[argmin]
                 optimal_log_scales_c.append(optimal_log_scale)
                 beta = 1 / (np.exp(optimal_log_scale) * abs(lambdas[i+1] - lambdas[i]))
                 lagrange = (optimal_log_scale >= self.log_scale_max)
-                x_corr = self.get_next_sample(x, i, hist, signal_rates, noise_rates, lambdas,
-                                            p=p, beta=beta, corrector=True, lagrange=lagrange)
+                x_corr = self.get_next_sample(x, i, hist, signal_rates, noise_rates, lambdas, p=p, beta=beta, corrector=True, lagrange=lagrange)
                 x = x_corr
             
         optimal_log_scales_p = np.array(optimal_log_scales_p)
@@ -387,9 +390,7 @@ class RBFSolverSPD:
             np.savez(save_file,
                      optimal_log_scales=optimal_log_scales,
                      pred_losses_list=pred_losses_list,
-                     corr_losses_list=corr_losses_list,
-                     pred_coeffs_list=pred_coeffs_list,
-                     lag_coeffs_list=lag_coeffs_list)
+                     corr_losses_list=corr_losses_list)
             print(save_file, ' saved!')
 
         # 최종적으로 x를 반환

@@ -1,8 +1,7 @@
 CKPT_PATH="/data/checkpoints/cifar10_ddpmpp_deep_continuous/checkpoint_8.pth"
 CONFIG="configs/vp/cifar10_ddpmpp_deep_continuous.py"
 SCALE_DIR="/data/score_sde_scale_rbf_spd"
-PAIR_NPZ='/data/score_sde_outputs/checkpoint_8/euler_1000/samples_0.npz'
-for steps in 5 6 8 10 12 15 20 25; do
+for steps in 5 6 8 10; do
 
 if [ $steps -le 10 ]; then
     EPS="1e-3"
@@ -30,5 +29,5 @@ else
     use_corrector="True"
 fi
 
-python target_matching.py --config=$CONFIG --pair_npz=$PAIR_NPZ --scale_dir=$SCALE_DIR --ckp_path=$CKPT_PATH --config.sampling.method=rbf_spd --config.sampling.steps=$steps --config.sampling.eps=$EPS
+python sample.py --config=$CONFIG --ckp_path=$CKPT_PATH --scale_dir=$SCALE_DIR --sample_folder="rbf_spd_"$steps --config.sampling.method=rbf_spd --config.sampling.steps=$steps --config.sampling.eps=$EPS
 done

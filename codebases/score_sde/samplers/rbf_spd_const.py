@@ -5,8 +5,8 @@ import numpy as np
 from .utils import expand_dims
 import math
 
-# SPD
-class RBFSolverSPD:
+# Constant Scale
+class RBFSolverSPDConst:
     def __init__(
             self,
             model_fn,
@@ -16,8 +16,8 @@ class RBFSolverSPD:
             thresholding_max_val=1.,
             dynamic_thresholding_ratio=0.995,
             scale_dir=None,
-            log_scale_min=-2.0,
-            log_scale_max=2.0,
+            log_scale_min=0,
+            log_scale_max=3.0,
             log_scale_num=100
     ):
         self.model = lambda x, t: model_fn(x, t.expand((x.shape[0])))
@@ -277,132 +277,36 @@ class RBFSolverSPD:
             next_sample = signal_rates[i+1]/signal_rates[i]*sample - signal_rates[i+1]*data_sum
         return next_sample
     
-    def get_loss_by_target_matching(self, i, steps, target, hist, log_scale, lambdas, p, corrector=False):
-        beta = 1 / (np.exp(log_scale) * abs(lambdas[i+1] - lambdas[i]))
-        lambda_array = torch.flip(lambdas[i-p+1:i+(2 if corrector else 1)], dims=[0])
-        coeffs = self.get_coefficients(lambdas[i], lambdas[i+1], lambda_array, beta)
-        
-        datas = hist[i-p+1:i+(2 if corrector else 1)][::-1]
-        data_sum = sum([coeff * data for coeff, data in zip(coeffs, datas)])
-
-        if self.predict_x0:
-            integral = (torch.exp(lambdas[i+1]) - torch.exp(lambdas[i]))
-        else:    
-            integral = (torch.exp(-lambdas[i]) - torch.exp(-lambdas[i+1]))
-        pred = data_sum / integral
-
-        loss = F.mse_loss(target, pred)
-        return loss, coeffs
-
     def sample_by_target_matching(self, x, target,
                                   steps, t_start, t_end, order=3, skip_type='logSNR',
                                   method='data_prediction', lower_order_final=True):
-        print('def sample_by_target_matching start!!!')
-        print(f"x.shape: {x.shape}, target.shape: {target.shape}, steps: {steps}, order: {order}, skip_type: {skip_type}, lower_order_final: {lower_order_final}")
-        # 샘플링할 시간 범위 설정 (t_0, t_T)
-        # diffusion 모델의 경우 t=1(혹은 T)에서 x는 가우시안 노이즈 상태라고 가정.
-        t_0 = 1.0 / self.noise_schedule.total_N if t_end is None else t_end
-        t_T = self.noise_schedule.T if t_start is None else t_start
-
-        # 텐서가 올라갈 디바이스 설정
-        device = x.device
+        log_scales = np.linspace(self.log_scale_min, self.log_scale_max, self.log_scale_num)
+        losses = []
+        from tqdm import tqdm
+        for log_scale in tqdm(log_scales):
+            y = self.sample(x, steps, t_start, t_end, order, skip_type, method, lower_order_final, log_scale, log_scale, load=False)
+            loss = F.mse_loss(target, y)
+            losses.append(loss.detach().item())
+        optimal_log_scale = log_scales[np.argmin(losses)]
         
-        # 샘플링 과정에서 gradient 계산은 하지 않으므로 no_grad()
-        with torch.no_grad():
-
-            # 실제로 사용할 time step array를 구한다.
-            # timesteps는 길이가 steps+1인 1-D 텐서: [t_T, ..., t_0]
-            timesteps = self.get_time_steps(skip_type=skip_type, t_T=t_T, t_0=t_0, N=steps, device=device)
-            lambdas = torch.Tensor([self.noise_schedule.marginal_lambda(t) for t in timesteps])
-            signal_rates = torch.Tensor([self.noise_schedule.marginal_alpha(t) for t in timesteps])
-            noise_rates = torch.Tensor([self.noise_schedule.marginal_std(t) for t in timesteps])
-
-            log_scales = np.linspace(self.log_scale_min, self.log_scale_max, self.log_scale_num)
-            optimal_log_scales_p = []
-            optimal_log_scales_c = []
-            
-            hist = [None for _ in range(steps)]
-            hist[0] = self.model_fn(x, timesteps[0])   # model(x,t) 평가값을 저장
-            
-            pred_losses_list = []
-            corr_losses_list = []
-            pred_coeffs_list = []
-            lag_coeffs_list = []
-            for i in range(0, steps):
-                if lower_order_final:
-                    p = min(i+1, steps - i, order)
-                else:
-                    p = min(i+1, order)
-                    
-                # ===predictor===
-                pred_losses = []
-                pred_coeffs = []
-                for log_scale in log_scales:
-                    loss, coeffs = self.get_loss_by_target_matching(i, steps, target, hist, log_scale, lambdas, p, corrector=False)
-                    pred_losses.append(loss.detach().item())
-                    pred_coeffs.append(coeffs)
-
-                lambda_array = torch.flip(lambdas[i-p+1:i+1], dims=[0])
-                coeffs = self.get_lag_coefficients(lambdas[i], lambdas[i+1], lambda_array)
-                lag_coeffs_list.append(coeffs)
-
-                pred_losses_list.append(np.stack(pred_losses))
-                argmin = np.stack(pred_losses).argmin()
-                optimal_log_scale = log_scales[argmin]
-                optimal_log_scales_p.append(optimal_log_scale)
-                beta = 1 / (np.exp(optimal_log_scale) * abs(lambdas[i+1] - lambdas[i]))
-                lagrange = (optimal_log_scale >= self.log_scale_max)
-                x_pred = self.get_next_sample(x, i, hist, signal_rates, noise_rates, lambdas,
-                                            p=p, beta=beta, corrector=False, lagrange=lagrange)
-                
-                if i == steps - 1:
-                    x = x_pred
-                    break
-                
-                # predictor로 구한 x_pred를 이용해서 model_fn 평가
-                hist[i+1] = self.model_fn(x_pred, timesteps[i+1])
-                
-                # ===corrector===
-                corr_losses = []
-                for log_scale in log_scales:
-                    loss, _ = self.get_loss_by_target_matching(i, steps, target, hist, log_scale, lambdas, p, corrector=True)
-                    corr_losses.append(loss.detach().item())
-
-                corr_losses_list.append(np.stack(corr_losses))
-                argmin = np.stack(corr_losses).argmin()
-                optimal_log_scale = log_scales[argmin]
-                optimal_log_scales_c.append(optimal_log_scale)
-                beta = 1 / (np.exp(optimal_log_scale) * abs(lambdas[i+1] - lambdas[i]))
-                lagrange = (optimal_log_scale >= self.log_scale_max)
-                x_corr = self.get_next_sample(x, i, hist, signal_rates, noise_rates, lambdas,
-                                            p=p, beta=beta, corrector=True, lagrange=lagrange)
-                x = x_corr
-            
-        optimal_log_scales_p = np.array(optimal_log_scales_p)
-        optimal_log_scales_c = np.array(optimal_log_scales_c + [0.0])
-        optimal_log_scales = np.stack([optimal_log_scales_p, optimal_log_scales_c], axis=0)
-
         if self.scale_dir is not None:
             save_file = os.path.join(self.scale_dir, f'NFE={steps},p={order}.npz')
             np.savez(save_file,
-                     optimal_log_scales=optimal_log_scales,
-                     pred_losses_list=pred_losses_list,
-                     corr_losses_list=corr_losses_list,
-                     pred_coeffs_list=pred_coeffs_list,
-                     lag_coeffs_list=lag_coeffs_list)
+                     optimal_log_scale=optimal_log_scale,
+                     losses=losses)
             print(save_file, ' saved!')
 
         # 최종적으로 x를 반환
         return x
 
-    def load_optimal_log_scales(self, steps, order):
+    def load_optimal_log_scale(self, steps, order):
         try:
             load_file = os.path.join(self.scale_dir, f'NFE={steps},p={order}.npz')
-            log_scales = np.load(load_file)['optimal_log_scales']
+            log_scale = np.load(load_file)['optimal_log_scale']
         except:
             return None
         print(load_file, 'loaded!')
-        return log_scales
+        return log_scale
     
     def sample(self, x, steps,
                t_start=None, t_end=None,
@@ -410,11 +314,11 @@ class RBFSolverSPD:
                lower_order_final=True,
                 log_scale_p=2.0,
                 log_scale_c=0.0,
+                load=True
                 ):
         # log_scale : predictor, corrector 모든 step에 적용할 log_scale, log_scales가 load안되면 log_scale로 작동
         # log_scales : predictor, corrector, step별로 적용할 log_scale array, shape : (2, NFE)
-
-        log_scales = self.load_optimal_log_scales(steps, order)
+        log_scale = self.load_optimal_log_scale(steps, order) if load else None
 
         t_0 = 1.0 / self.noise_schedule.total_N if t_end is None else t_end
         t_T = self.noise_schedule.T if t_start is None else t_start
@@ -442,7 +346,7 @@ class RBFSolverSPD:
                     p = min(i+1, order)
 
                 # ===predictor===
-                s = log_scale_p if log_scales is None else log_scales[0, i]
+                s = log_scale_p if log_scale is None else log_scale
                 lagrange = (s >= self.log_scale_max)
                 beta = 1 / (np.exp(s) * abs(lambdas[i+1] - lambdas[i]))
                 x_pred = self.get_next_sample(x, i, hist, signal_rates, noise_rates, lambdas,
@@ -456,7 +360,7 @@ class RBFSolverSPD:
                 hist[i+1] = self.model_fn(x_pred, timesteps[i+1])
                 
                 # ===corrector===
-                s = log_scale_c if log_scales is None else log_scales[1, i]
+                s = log_scale_c if log_scale is None else log_scale
                 lagrange = (s >= self.log_scale_max)
                 beta = 1 / (np.exp(s) * abs(lambdas[i+1] - lambdas[i]))
                 x_corr = self.get_next_sample(x, i, hist, signal_rates, noise_rates, lambdas,
