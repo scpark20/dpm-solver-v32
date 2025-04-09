@@ -1,0 +1,3 @@
+name : rbf_ecp_same4
+step : 10
+FID  : 4.914612770080566

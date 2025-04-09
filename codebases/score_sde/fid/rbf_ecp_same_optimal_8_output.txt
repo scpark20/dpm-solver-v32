@@ -1,0 +1,3 @@
+name : rbf_ecp_same_optimal
+step : 8
+FID  : 5.235272407531738

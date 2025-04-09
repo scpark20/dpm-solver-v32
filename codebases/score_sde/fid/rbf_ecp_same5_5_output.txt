@@ -1,0 +1,3 @@
+name : rbf_ecp_same5
+step : 5
+FID  : 27.03867530822754

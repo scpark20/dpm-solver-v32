@@ -1,7 +1,6 @@
 CKPT_PATH="/data/checkpoints/cifar10_ddpmpp_deep_continuous/checkpoint_8.pth"
-CONFIG="configs/vp/cifar10_ddpmpp_deep_continuous.py"
-SCALE_DIR="/data/score_sde_scale_rbf_ecp"
-for steps in 12 15 20 25; do
+CONFIG="configs/vp/cifar10_ddpmpp_deep_continuous_N=10k_order=3.py"
+for steps in 200; do
 
 if [ $steps -le 10 ]; then
     EPS="1e-3"
@@ -29,5 +28,5 @@ else
     use_corrector="True"
 fi
 
-python sample.py --config=$CONFIG --ckp_path=$CKPT_PATH --scale_dir=$SCALE_DIR --sample_folder="rbf_ecp_optimal_"$steps --config.sampling.method=rbf_ecp --config.sampling.steps=$steps --config.sampling.eps=$EPS
+python sample.py --config=$CONFIG --ckp_path=$CKPT_PATH --sample_folder="lagrange_10k"$steps --config.sampling.method=lagrange --config.sampling.steps=$steps --config.sampling.eps=$EPS
 done
