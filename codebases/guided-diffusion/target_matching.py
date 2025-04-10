@@ -40,13 +40,6 @@ def parse_args_and_config():
         default="dpmsolver++",
         help="Sampling approach ('generalized'(DDIM) or 'ddpm_noisy'(DDPM) or 'dpmsolver' or 'dpmsolver++' or 'unipc' or 'dpmsolver_v3')",
     )
-
-    parser.add_argument(
-        "--scale_dir",
-        type=str,
-        default=None,
-        help="scale dir to load",
-    )
     parser.add_argument(
         "--skip_type",
         type=str,
@@ -148,7 +141,7 @@ def sample(rank, world_size, args, config):
 
     try:
         runner = Diffusion(args, config, rank=rank)
-        runner.sample()
+        runner.sample_by_target_mathing()
 
     except Exception:
         logging.error(traceback.format_exc())
