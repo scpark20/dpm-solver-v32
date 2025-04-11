@@ -1,0 +1,433 @@
+['/home/logpx/scpark/dpm-solver-v32/codebases/stable-diffusion', '/home/logpx/miniconda3/envs/rbf/lib/python311.zip', '/home/logpx/miniconda3/envs/rbf/lib/python3.11', '/home/logpx/miniconda3/envs/rbf/lib/python3.11/lib-dynload', '/home/logpx/.local/lib/python3.11/site-packages', '/home/logpx/miniconda3/envs/rbf/lib/python3.11/site-packages', '/home/logpx/scpark/dpm-solver-v32/codebases/stable-diffusion/src/taming-transformers', '/home/logpx/scpark/dpm-solver-v32/codebases/stable-diffusion/src/clip', '/home/logpx/miniconda3/envs/rbf/lib/python3.11/site-packages/setuptools/_vendor', '/tmp/tmp61seq95l']
+Loading model from models/ldm/stable-diffusion-v1/sd-v1-4.ckpt
+Global Step: 470000
+LatentDiffusion: Running in eps-prediction mode
+DiffusionWrapper has 859.52 M params.
+making attention of type 'vanilla' with 512 in_channels
+Working with z of shape (1, 4, 32, 32) = 4096 dimensions.
+making attention of type 'vanilla' with 512 in_channels
+reading prompts from prompts/prompts.txt
+('movies', 'text', 'glasses')
+do not run corrector at the last step
+('order', 'fax')
+Warning: Got 2 conditionings but batch-size is 3
+['/home/logpx/scpark/dpm-solver-v32/codebases/stable-diffusion', '/home/logpx/miniconda3/envs/rbf/lib/python311.zip', '/home/logpx/miniconda3/envs/rbf/lib/python3.11', '/home/logpx/miniconda3/envs/rbf/lib/python3.11/lib-dynload', '/home/logpx/.local/lib/python3.11/site-packages', '/home/logpx/miniconda3/envs/rbf/lib/python3.11/site-packages', '/home/logpx/scpark/dpm-solver-v32/codebases/stable-diffusion/src/taming-transformers', '/home/logpx/scpark/dpm-solver-v32/codebases/stable-diffusion/src/clip', '/home/logpx/miniconda3/envs/rbf/lib/python3.11/site-packages/setuptools/_vendor', '/tmp/tmpmv8986dj']
+Loading model from models/ldm/stable-diffusion-v1/sd-v1-4.ckpt
+Global Step: 470000
+LatentDiffusion: Running in eps-prediction mode
+DiffusionWrapper has 859.52 M params.
+making attention of type 'vanilla' with 512 in_channels
+Working with z of shape (1, 4, 32, 32) = 4096 dimensions.
+making attention of type 'vanilla' with 512 in_channels
+reading prompts from prompts/prompts.txt
+('movies', 'text', 'glasses')
+do not run corrector at the last step
+('order', 'fax', 'girl')
+do not run corrector at the last step
+['/home/logpx/scpark/dpm-solver-v32/codebases/stable-diffusion', '/home/logpx/miniconda3/envs/rbf/lib/python311.zip', '/home/logpx/miniconda3/envs/rbf/lib/python3.11', '/home/logpx/miniconda3/envs/rbf/lib/python3.11/lib-dynload', '/home/logpx/.local/lib/python3.11/site-packages', '/home/logpx/miniconda3/envs/rbf/lib/python3.11/site-packages', '/home/logpx/scpark/dpm-solver-v32/codebases/stable-diffusion/src/taming-transformers', '/home/logpx/scpark/dpm-solver-v32/codebases/stable-diffusion/src/clip', '/home/logpx/miniconda3/envs/rbf/lib/python3.11/site-packages/setuptools/_vendor', '/tmp/tmp07_nq1f1']
+Loading model from models/ldm/stable-diffusion-v1/sd-v1-4.ckpt
+Global Step: 470000
+LatentDiffusion: Running in eps-prediction mode
+DiffusionWrapper has 859.52 M params.
+making attention of type 'vanilla' with 512 in_channels
+Working with z of shape (1, 4, 32, 32) = 4096 dimensions.
+making attention of type 'vanilla' with 512 in_channels
+reading prompts from prompts/prompts.txt
+('movies', 'text', 'glasses')
+do not run corrector at the last step
+('order', 'fax', 'girl')
+do not run corrector at the last step
+['/home/logpx/scpark/dpm-solver-v32/codebases/stable-diffusion', '/home/logpx/miniconda3/envs/rbf/lib/python311.zip', '/home/logpx/miniconda3/envs/rbf/lib/python3.11', '/home/logpx/miniconda3/envs/rbf/lib/python3.11/lib-dynload', '/home/logpx/.local/lib/python3.11/site-packages', '/home/logpx/miniconda3/envs/rbf/lib/python3.11/site-packages', '/home/logpx/scpark/dpm-solver-v32/codebases/stable-diffusion/src/taming-transformers', '/home/logpx/scpark/dpm-solver-v32/codebases/stable-diffusion/src/clip', '/home/logpx/miniconda3/envs/rbf/lib/python3.11/site-packages/setuptools/_vendor', '/tmp/tmpip63is_u']
+Loading model from models/ldm/stable-diffusion-v1/sd-v1-4.ckpt
+Global Step: 470000
+LatentDiffusion: Running in eps-prediction mode
+DiffusionWrapper has 859.52 M params.
+making attention of type 'vanilla' with 512 in_channels
+Working with z of shape (1, 4, 32, 32) = 4096 dimensions.
+making attention of type 'vanilla' with 512 in_channels
+reading prompts from prompts/prompts.txt
+('A small kitchen with some quirky art decorations.', 'A dog wearing a bandanna and sitting on the trunk of a car.', 'A small kitchen contains a refrigerator and small counter. ')
+['/home/logpx/scpark/dpm-solver-v32/codebases/stable-diffusion', '/home/logpx/miniconda3/envs/rbf/lib/python311.zip', '/home/logpx/miniconda3/envs/rbf/lib/python3.11', '/home/logpx/miniconda3/envs/rbf/lib/python3.11/lib-dynload', '/home/logpx/.local/lib/python3.11/site-packages', '/home/logpx/miniconda3/envs/rbf/lib/python3.11/site-packages', '/home/logpx/scpark/dpm-solver-v32/codebases/stable-diffusion/src/taming-transformers', '/home/logpx/scpark/dpm-solver-v32/codebases/stable-diffusion/src/clip', '/home/logpx/miniconda3/envs/rbf/lib/python3.11/site-packages/setuptools/_vendor', '/tmp/tmpxcj_qnk5']
+Loading model from models/ldm/stable-diffusion-v1/sd-v1-4.ckpt
+Global Step: 470000
+LatentDiffusion: Running in eps-prediction mode
+DiffusionWrapper has 859.52 M params.
+making attention of type 'vanilla' with 512 in_channels
+Working with z of shape (1, 4, 32, 32) = 4096 dimensions.
+making attention of type 'vanilla' with 512 in_channels
+reading prompts from prompts/prompts.txt
+('A small kitchen with some quirky art decorations.', 'A dog wearing a bandanna and sitting on the trunk of a car.', 'A small kitchen contains a refrigerator and small counter. ')
+do not run corrector at the last step
+('A small refrigerator in a small kitchen with a window.', 'a blue and yellow train a building and some cars', 'Wooden bench sitting in the grass  under a tree.')
+do not run corrector at the last step
+('a pole with street lights, signs and wires attached to it ', 'A man walks past a closed store front.', 'A pizza sitting on top of a wooden cutting board.')
+do not run corrector at the last step
+('A white bowl sitting on top of a table.', 'A group of men on a field playing baseball.', 'A woman prepares to serve the ball during a tennis match.')
+do not run corrector at the last step
+('A man is riding the waves on a surfboard.', 'the jet getting ready for take off on the landing', 'A large submarine sandwich sitting on two plastic containers of ham.')
+do not run corrector at the last step
+('three brown white black  horses and a an arrow sign', 'A motorcycle police officer leads a parade on a sunny day.', 'A street scene with motorcycles parked along the side of the road with people dining outside.')
+do not run corrector at the last step
+("She is explaining how she made the cat's treat.", 'The older woman is admiring the peacock walk.', 'Some very cute giraffes in a big field.')
+do not run corrector at the last step
+('a fancy bed room with a canopy and a chandelier ', 'A group of young women playing a game of soccer.', 'A kitchen that is very nice and clean.')
+do not run corrector at the last step
+('A flat pizza with toppings served on a cutting board', 'A woman standing in front of a giraffe.', 'The red clock is in the center of the street.')
+do not run corrector at the last step
+('A half eaten meal in a bowl near some laptops.', 'A bear in front of a computer screen on a table. ', 'A tennis player is getting ready to hit a ball.')
+do not run corrector at the last step
+('A plate topped with pasta and and onions.', 'A train traveling under a signal lights on top of tracks.', 'An individual is about to slice the cake in pieces. ')
+do not run corrector at the last step
+('A man flying through the air while riding a snowboard.', 'Brown and black dog looking at a person holding a frisbee. ', 'A show car parked with its hood open and a teddy bear tucked into the engine well.')
+do not run corrector at the last step
+('A mobile of some sort hanging on the ceiling.', 'A traffic light and traffic signs sitting in front of a building.', 'Many boys sit in a group as a coach swings at a t-ball stand.')
+do not run corrector at the last step
+('A person on skis on snowy forest path.', 'Two trains who are at a train station.', 'Two people on a long rowboat in a river or lake.')
+do not run corrector at the last step
+('A train is riding on the tracks into a station.', 'A man in suspenders sitting on a bench with an umbrella.', 'Several glasses of wine are presented on a red mat.')
+do not run corrector at the last step
+('A newspaper that has sunglasses on top of it sitting in front of books.', 'A kitchen counter with a white stove, trashcan and fire extinguisher.', 'Bathroom with fancy tiled walls and large mirror.')
+do not run corrector at the last step
+('Carrots piled up on a sidewalk near a vehicle', 'A clean and naturally lit bathroom with a walk-in shower.', 'a person that is sitting in front of a laptop')
+do not run corrector at the last step
+('A cat laying upside down on a couch with a banana toy', 'A man in white is playing on a tennis court.', 'A cat is playing with the shoelaces of a person wearing a skirt.')
+do not run corrector at the last step
+('Two men are at an intersection on motorcycles.', 'a person sitting at a table in front of some pizza ', 'A person skiing alone on snow covered mountain')
+do not run corrector at the last step
+('A puffy pizza is on a metal plate on a table.', 'A small green vehicle model is on display next to a busy city street.', 'A group of people along with their dog skiing across snow covered ground.')
+do not run corrector at the last step
+('A shiny blue motorcycle parked near the road. ', 'View of a skateboarder igrinding a rail through a lens', 'A cow standing in a grassy open field.')
+do not run corrector at the last step
+('A dog with long hair sitting with a Wii controller', 'A young man playing tennis on a clay court.', 'A dog with floppy ears sitting on a couch.')
+do not run corrector at the last step
+('A tennis player with racket and a bag with a baby', 'A television is on the ceiling of a bus.', 'A young man holding a white guitar hero guitar while standing in front of a TV.')
+do not run corrector at the last step
+('A traffic light on the side of the street.', 'A kitchen has a granite counter top and stainless steel appliances.', 'A commercial of some Mexican people in the back. ')
+do not run corrector at the last step
+('Several sheep are eating hay near a fence.', 'a close up of a dog laying in a luggage bag on the ground', 'A bike lane has been painted on the road.')
+do not run corrector at the last step
+('An ad for a plumbing company is stapled to a telephone pole.', 'some yellow bananas with little blue stickers on them', 'A pack of zebra walking around a grass covered forest.')
+do not run corrector at the last step
+('Two people in a speed boat on a body of water.', 'The green plants are growing in the garden.', 'A man is on a couch looking at a computer laptop.')
+do not run corrector at the last step
+('A bear climbs down a steep hill covered in rocks and trees.', 'a red train going down a track by a platform ', 'A woman standing on a sidewalk near some water holding an animal print umbrella.')
+do not run corrector at the last step
+('a bunch of cows walking down the road', 'A large long train on a steel track.', 'A man giving a child a hair cut.')
+do not run corrector at the last step
+('A black bear is walking around his confined space at the zoo.', 'A professional tennis player about to serve the ball', 'A man takes a pictures of himself in a mirror.')
+do not run corrector at the last step
+('Two people flying large kites on the beach.', 'A small knife next to a sliced and chopped pepper. ', 'An open floor plan may represent a spacial perspective.')
+do not run corrector at the last step
+('A group of stuffed animals and guinea pig sitting on a couch. ', 'Birds are sitting on logs near the water.', 'A pizza sitting on top of a wooden table.')
+do not run corrector at the last step
+('A group of wooden horses on a rod.', 'The passenger train is pulling grey train cars. ', 'A group of giraffe standing in an open field.')
+do not run corrector at the last step
+('a person jumping a skate board in the air ', 'Mastering the art of skateboarding is profoundly beneficial.', 'Two kayaks sitting on the shore of a body of water.')
+do not run corrector at the last step
+('This is an image of a man laying down with a tennis racket.', 'a black and white photo with pops of red in color', 'Young surfer quite vertical on an incoming wave')
+do not run corrector at the last step
+('a yellow white and blue train a fence and some lights', 'I am unable to see an image above.', 'a small boat in a large body of water')
+do not run corrector at the last step
+('The plates of food are ready to serve.', 'Crowd walking under banners with various food menus and cars lining streets', 'A bird with red area around its eye sitting in a tree.')
+do not run corrector at the last step
+('An airliner is loaded passengers on the tarmac.', 'A man in a tuxedo is holding a beer', 'A person stands at the bottom of a snowy ski hill.')
+do not run corrector at the last step
+('Two people that are posing for a picture.', 'An old brick building next to a tree, near traffic. ', 'A bird that is sitting on a branch.')
+do not run corrector at the last step
+('A man riding on top of a board on a wave.', 'We are looking at a closeup of an ornate clock.', 'Two large elephants together with a baby elephant close by.')
+do not run corrector at the last step
+('a white car is driving down the street', 'A stylized photo of a statue in front of a building.', 'This is a shot of a man doing a trick on his skateboard.')
+do not run corrector at the last step
+('A chicken entree is presented in an elaborate purple dish.', 'A clock that is in the middle of the building.', 'Three zebras are standing in a row grazing on hay.')
+do not run corrector at the last step
+('A construction crew repairing electrical wires over a busy intersection.', 'A tug boat out on a large body of water.', 'A giraffe in the wild sticking its head into a leafless tree.')
+do not run corrector at the last step
+('A man is standing on a street corner.', 'a white laptop and mouse on a table', 'A tennis player is on an outdoor court.')
+do not run corrector at the last step
+('A person a surf board riding the water waves.', 'two elephants on a field of green of green grass', 'A boy with a kite is standing on a sidewalk.')
+do not run corrector at the last step
+('a number of people riding skis on a snowy surface', 'Two young men riding skateboards across a parking lot.', 'A person that is having a lot of fun on their surfboard. ')
+do not run corrector at the last step
+('a girl holding a frisbee in a pretty dress in the grass', 'A power boat on a body of water with a large water spray behind.', 'A double decker bus is traveling down the road .')
+do not run corrector at the last step
+('A close up image of a street sign in daylight. ', 'a man with white swim trunks is surfing', 'People that are walking with skateboards in hand. ')
+do not run corrector at the last step
+('This is a thing that is straightforward and plain. ', '', 'A vase with green leaves is sitting on display.')
+do not run corrector at the last step
+('A white open toilet seat with signatures sitting amongst posters.', 'A man on a motorcycle riding along a parade route.', 'Sheep and lambs with green paint on their backs.')
+do not run corrector at the last step
+('A boy flying a kite in a park.', 'A Giraffe stooping over in an open field.', 'Children scale and stand on a fence overlooking an arched entrance. ')
+do not run corrector at the last step
+('Color corrected photograph of people next to market with bananas.', 'A blurry black and white image of a little boy playing.', 'People watching off the side of a cruise ship as a life boat is lowered.')
+do not run corrector at the last step
+('A Egyptian painting with 4 black horses on it', 'A person riding a skateboard on the corner next to a busy street.', 'a baby girl looks excitedly at a plate of cupcakes with pink frosting near a window.')
+do not run corrector at the last step
+('a man pushing a cart filled with assorted fruit and veggies on it ', 'A sheet cake sitting on top of a table with lit candles.', 'A man on a horse and four cows in a field.')
+do not run corrector at the last step
+('A surfer is riding back side on a wave.', 'Dirty toilet sitting in the middle of a room.', 'A woman on a city street with face painted like a cat.')
+do not run corrector at the last step
+('A vase of roses dwarfed between two large planters sits in a window.', 'The man is riding his bike on the track.', 'A beach area with people flying a kite next to tree.')
+do not run corrector at the last step
+('This is a beautiful and extremely neat bedroom.', 'A table setting displaying a warm beverage and a plate of waffles and fruit.', 'A beached sailboat in the sand with a chair next to it.')
+do not run corrector at the last step
+('A man wearing sunglasses drinks from the wine glass', 'Three children fly a kite along the beach.', 'Picture of an exterior place that looks wonderful.')
+do not run corrector at the last step
+('', 'A kitchen range with food cooking in the oven and on the stove top.', 'A dog kissing a cat on top of a cement road.')
+do not run corrector at the last step
+('A man doing a trick on a skateboard by a ramp.', 'A large herd of sheep crossing over a dirt roadway.', 'A billboard showing zebras on a bridge and cars in a traffic jam below it')
+do not run corrector at the last step
+('a night view of a street with lights from cars', 'A man sitting on the back of a tandem bike holding his cell phone.', 'a man in a yellow shirt in front of some glass')
+do not run corrector at the last step
+('an elephant standing in a field checking out its trunk', 'A pair of small dogs lying on a bed.', 'A tray with a plate full of food, a drink and silverware.')
+do not run corrector at the last step
+('A white car at intersection of two roads.', 'Sliced of pizza sitting on a plate with chips.', 'A bird that is sitting in the rim of a tire.')
+do not run corrector at the last step
+('People are on the sand watching their kite in the sky.', 'A beach with two boats and a tractor.', 'A man sits in a coffee shop working on his laptop computer.')
+do not run corrector at the last step
+('a woman in tennis gear holding a tennis racket on a tennis court', 'a big pizza that is laying on a table', 'A city with snow and slush filling the ground.')
+do not run corrector at the last step
+('Two giraffe standing next to each other on a lush green field.', 'The cat is laying on the made bed', 'A couple of guys that are sitting on couches.')
+do not run corrector at the last step
+('two cup like things with a bird and a wolf painted on them', 'A smiling woman holding a birthday cake for a picture.', 'A man surfs the waves in the ocean.')
+do not run corrector at the last step
+('A little boy sitting alone on a motorcycle.', 'A group of men standing around a UK surfboard.', 'I love the way the sun is creeping behind those two buidings')
+do not run corrector at the last step
+('Several bowls filled with different types of vegetables.', 'a bathroom with multiple toilet stalls and urinals ', 'A bike stands on his dirtbike in a circus.')
+do not run corrector at the last step
+('A cow that is standing in the grass.', 'An old photo of a bride and groom in front of a stone building.', 'A small herd of animals stand on a rocky path.')
+do not run corrector at the last step
+('A person on a motor bike on a street.', 'A giraffe standing in a picture with a field in back.', 'A box filled with all types of different types of donuts.')
+do not run corrector at the last step
+('This woman is unloading the TVs she is going to try and sell.', 'Motorcycle parked in a parking garage with other vehicles.', 'A guy playing the nintendo wii has a blast of a time')
+do not run corrector at the last step
+('a man is doing a trick on a skateboard', 'A girl is taking a selfie while brushing her teeth.', 'A teddy bear is standing with a sign.')
+do not run corrector at the last step
+('A tennis player on a tennis court holds his racket as a crowd watches him.', 'A plate topped with banana slice covered pan cakes.', 'A variety of street signs, near an outdoor cafe.')
+do not run corrector at the last step
+('a dog is having some fun chasing some wild ducks', 'A group of people flying kites by the river.', 'A stand with a lot of different vegetables in boxes.')
+do not run corrector at the last step
+('The burrito set on the napkin is about half eaten', 'A road sign on a highway with cars and traffic lights', 'A cat sitting on a chair with a pillow behind it.')
+do not run corrector at the last step
+('A bedroom with the door closed, white walls and a white comforter on the bed.', 'A curtain holds back the sunlight in a living room.', 'A baseball player in red and white contorts his body as a ball hovers in the air above him.')
+do not run corrector at the last step
+('The person is taking a selfie using the cars mirror', "Soigo'd is soccer player number 8 preparing to kick a soccer ball.", 'a close up of two people holding wine glasses')
+do not run corrector at the last step
+('A tall building with giant clock tower sitting above it.', 'a group of people all sitting on the couch and doing things', 'Two sheep grazing in a field of green.')
+do not run corrector at the last step
+('a young boy flying a kite in a soccer field ', 'Two cats are sleeping in suspended beds and another cat is perched on top of one of the beds.', 'A large brown bear swimming in a river.')
+do not run corrector at the last step
+('A kite flying in the sky over a grassy hill.', 'several people are waiting at a train station', 'a couple of people that are walking next to a red bus')
+do not run corrector at the last step
+('A group of people playing frisbee against each other.', 'A blurry photo of a kitten on a bed playing with a scarf.', 'Two people are playing frisbees and one guy picks up another one in hopes of catching the overthrown frisbees')
+do not run corrector at the last step
+('A colorful cute filled with furniture and flooring.', 'this is a close up picture of two giraffes faces', 'A traffic sign sitting below a building next to bikes.')
+do not run corrector at the last step
+('A group of motorcyclist stop in traffic on their bikes.', 'A man getting ready to catch a Frisbee in the park.', 'A purple and white bus in a parking lot.')
+do not run corrector at the last step
+('The child takes a bite of food beside a cup with liquid in it.', 'Two burger sandwiches on top of a table.', 'two sheep sticking their head through the fence')
+do not run corrector at the last step
+('A photo of an Asian market with a display case.', 'Several directional signs in Israel with buildings in the background.', 'a wall covered in decorations in what looks like a small kitchen')
+do not run corrector at the last step
+('Several cars lined up to be loaded onto a boat.', 'A clock on the side of a building that reads 12:10.', 'A father helps his son fly his kite.')
+do not run corrector at the last step
+('There are a lot of cheifs that are out cooking on a photo', 'Debris on a corner outside of a building near a street sign.', "Two motorcycles sitting in a trailer that's being pulled behind an RV.")
+do not run corrector at the last step
+('A man riding a motorcycle on a dirt road.', 'Couple plays with a Frisbee in the park', 'Several planes lined up on the tarmac at the airport.')
+do not run corrector at the last step
+('A living room with hard wood floors and a tv over a fireplace.', 'A cautionary sign which has been severely bent', 'A woman with a pink umbrella is walking across the street as traffic passes in the city behind her. ')
+do not run corrector at the last step
+('A porch with several wind catchers hung from hooks. ', 'A person and a horse are walking along a coast line.', 'A white outdoor street sign reads date street.')
+do not run corrector at the last step
+('A tennis player in a stance ready to return a serve.', 'A red bus driving past a group of passengers.', 'And older refrigerator is shown with the door wide open.')
+do not run corrector at the last step
+('Several different slices of pizza sitting on a plate.', 'a tennis player sitting in the shade beside the tennis court', 'a drawn picture of a horse with wings')
+do not run corrector at the last step
+('A row of green mossy covered park benches.', 'There are five people in the banana warehouse.', 'Two Two white plates of food with mixed vegetables and meat. ')
+do not run corrector at the last step
+('The baby lamb is standing on green grass.', 'An empty kitchen with new cabinets, a faucet and a stove.', 'a bike is chained to a lamp post outside')
+do not run corrector at the last step
+('Two slices of pizza, one red and one white, on a paper plate.', 'Women are walking through a field with horses.', 'these people are walking together down a road')
+do not run corrector at the last step
+('a snow skier sitting down looking at the  camera', 'A table topped with vegetables and a pitcher.', 'A bear is taking a walk through the forest. ')
+do not run corrector at the last step
+('Two books about Berlin sit on a wood table.', 'Black and white checked tile and restroom toilet.', 'A woman flying a kite on the side of a hill.')
+do not run corrector at the last step
+('THERE ARE TWO STUFF ANIMALS ON THE CHAIR', 'A family of all ages gather together in a kitchen.', 'A small crane stands on the roof of a car in a city area.')
+do not run corrector at the last step
+('An airplane can be seen flying over a mountain.', 'A zebra stands looking over another sitting zebra.', 'A tennis court with a person with racket in foreground and someone running behind.')
+do not run corrector at the last step
+('A close up of a tie on a man ', 'A bathroom has yellow walls, brown floors, and a closet in it.', 'a pole that has a big blue sign on it')
+do not run corrector at the last step
+('a bunch of animals by a nasty street', 'W girl is sitting on a wooden bench by a rock wall.', 'A surfer standing in the ocean holding a surfboard.')
+do not run corrector at the last step
+('A cross country ski competitor passing a snow mobile', 'Train on track as it approaches a bridge.', 'there is a baseball game on and many people watching it')
+do not run corrector at the last step
+('A woman sitting on a bench next to a child in a stroller.', 'A black and white cat sleeping on top of a bed.', 'Group of people in horse stall petting the horse')
+do not run corrector at the last step
+('Two blue and white buses stopped at a bus stop.', 'A youth on a toilet taking a "selfie" in a mirror.', 'This skier has just jumped from a ski slope.')
+do not run corrector at the last step
+('Three hot dogs sitting next to each other.', 'A cat that is sitting with its head in the toilet.', 'A bowl of prepared food including rice, meat and broccoli.')
+do not run corrector at the last step
+('a computer with a keyboard that has black and white keys ', 'A person surfing on a wave that is crashing.', 'Brightly lit bathroom with a sink and toilet.')
+do not run corrector at the last step
+('Washcloths, soap, and lotion are arranged on a bathroom counter.', 'Stuffed animals are displayed down a table with notecards.', 'a giraffe standing on a sandy beach in front of some rocks')
+do not run corrector at the last step
+('Many sheep are grazing for food in the grass.', 'A person in a black jacket skiing through deep snow.', 'Person with a helmet riding on a black horse.')
+do not run corrector at the last step
+('A dish of pasta and broccoli is covered by finely shredded cheese.', 'A group of four birds sitting on top of a tree branch below a clock tower.', 'A couple of people that are riding some horses.')
+do not run corrector at the last step
+('A man standing in the rain at night.', 'A bicycle is parked next to a fire hydrant.', 'A horse and bucket inside of an outside tunnel.')
+do not run corrector at the last step
+('A man relaxing at home, watching television with his dog.', 'A small girl in a flowered dress watches a frisbee', 'A cat playing with someones feet as they stand on a chair.')
+do not run corrector at the last step
+('A group of zebra standing on top of a dry grass field.', "A parking meter with a reserved space bag over it's right side.", 'A tree grows bunches of green bananas as a man with yellow flip flops stands near it.')
+do not run corrector at the last step
+('View of an English city from the choppy water.', 'two different pizzas that just came out of an oven. ', 'Pillows and blanket with sunlight cast over them through window')
+do not run corrector at the last step
+('A person eating a meal with their hands.', 'Spectators and players watching a professional baseball game', 'A man riding skis with ski poles down a snow covered slope.')
+do not run corrector at the last step
+('Several wooden benches near water and a lighthouse.', 'A transit bus pulling into a camp ground area.', 'A marina filled with sailboats on a sunny day.')
+do not run corrector at the last step
+('A street sign is painted yellow and white.', 'A person in a hood looking at a pair of birds on a rail.', 'A fireplace and dining table in a dining room.')
+do not run corrector at the last step
+('A young girl sitting on a futon with her laptop.', 'A person riding a skate board above a big pipe.', 'A bell tower on top of a building with a clock below.')
+do not run corrector at the last step
+('there is a man and a woman flying a kite on the beach', 'A man lying his head on his laptop while two cats surround him. ', 'A passenger jet that is flying in the clouds.')
+do not run corrector at the last step
+('A man at a restaurant is waiting to serve customers.', 'A surfer rides a wave as others paddle over the water. ', 'A group of people standing on snow covered ground.')
+do not run corrector at the last step
+('A bagel sandwich on a square plate next to a fork.', 'There is a plate of food and a pizza on a table.', 'A plate topped with a cake and a hat.')
+do not run corrector at the last step
+('The walls near the sink are covered with framed photos.', 'Two dogs cuddled up to each other in a sunny spot on the floor.', 'A refrigerator in a kitchen with its door opened.')
+do not run corrector at the last step
+('A red stop sign sitting next to a forest.', 'The cars are sharing the busy road with the horse.', 'a woman standing at a tennis court with a tennis racket')
+do not run corrector at the last step
+('A man wearing jean and sneakers riding a black motorcycle.', 'A man in blue shirt and shorts swinging a baseball bat.', 'Three red buses are parked along the street.')
+do not run corrector at the last step
+('Children playing and standing around in a green field.', 'A striped cat standing next to an open toilet.', 'The man appears to be floating over a bed.')
+do not run corrector at the last step
+('Blue white and yellow passenger train coming to a stop at a station. ', 'A sandwich filled with vegetables and meat sits on a silver wrapper.', 'a quarter is surrounded by some rocks with holes')
+do not run corrector at the last step
+('A wide shot of a bathroom with shower, sink, and bath.', 'A woman swinging a tennis racket on a court.', 'A spiral of bananas sitting inside of a large bowl.')
+do not run corrector at the last step
+('A bowl on a table filled with bananas and pears.', 'A little girl sitting at the end of a bed looking at a teddy bear.', 'A man eating a hot dog at a sporting event.')
+do not run corrector at the last step
+('Avery long hot dog with ketchup, mustard and onions.', 'a skateboarder is wearing a blue shirt and doing a trick', 'Several elephants giving each other a bath in a pond.  ')
+do not run corrector at the last step
+('A group of muddy elephants standing by rocks.', 'A very big pretty white bus and some people.', 'A baseball game with team mates standing by the dugout and fans in the stands.')
+do not run corrector at the last step
+('A very tall building with a clock at the top of it.', 'A man is standing between two elephants in their pen.', 'A humorous stop sign is pictured in this image.')
+do not run corrector at the last step
+('Three gummy bears standing on different letters on a keyboard.', 'A bunch of children skiing down a slope', 'A train with graffiti on the tracks next to a building full of graffiti.  ')
+do not run corrector at the last step
+('A room with a television, a sofa, and a seat.', "A baby holding a i phone sleeping in it's mother's arms.", 'there is a black dog on the beach with a frisbee')
+do not run corrector at the last step
+('Two dogs playing tug of war with a Frisbee.', 'The gentleman is trying to fix his tie.', 'This is an image of a meal with wine inside a home.')
+do not run corrector at the last step
+('The view outside the plane window is of mountains.', 'A bathroom has a slanted roof and red tile by the bathtub.', 'Several people riding on jet skis in the water. ')
+do not run corrector at the last step
+('A bunch of doughnuts with sprinkles on them', 'A woman in an odd outfit on a bed', 'There is a wood and stone vanity with one sink and a shelf below the vanity top in a bathroom.')
+do not run corrector at the last step
+('A woman standing next to a red scooter near a shelf.', 'A surfboard, desk, chair and laptop sitting by a window.', 'A bus driving down a street next to tall buildings.')
+do not run corrector at the last step
+('A newborn baby lays on a bed next to stuffed animals.', 'There are many small boats in the water', 'A crying woman looking at herself in a mirror.')
+do not run corrector at the last step
+('A girl holds an umbrella and looks back.', 'An orange cat laying on top of a black car.', 'A green double deck tour bus riding through a small street.')
+do not run corrector at the last step
+('A ferry with some people sitting on it with umbrellas.', 'A black and white cat is snuggling with a stuffed bear.', 'A train traveling down train tracks next to a lush green hillside.')
+do not run corrector at the last step
+('Three zebras grazing in a grassy field next to shadow.', 'A man in a snow suit snowboarding down a slope.', 'A man talking on an old style cell phone.')
+do not run corrector at the last step
+('A cat sitting underneath a bed on the floor.', 'A soccer match on a university athletic field.', 'A man standing on a tennis court holding a racquet.')
+do not run corrector at the last step
+('a burger and salad are on a plate for dinner', 'A skateboarder doing tricks on the edge of a wall.', 'A guy in a bathroom taking a self portrait of his self.')
+do not run corrector at the last step
+('A person surfing under a wave in the ocean.', 'a parked van with graffiti painted all over it', 'A group of people ride bikes on a path while other people sit around tents near parked cars.')
+do not run corrector at the last step
+('there are many men playing soccer in a field', 'An orange and yellow train on train tracks going through the countryside.', 'A toy action figure holding a plastic mini teddy bear and a cocktail glass decoration on the snow.')
+do not run corrector at the last step
+('A person taking a picture of a bathroom sink. ', 'A man on a motorcycle rides past a waterfall.', 'A little girl standing in front of a couch holding a remote.')
+do not run corrector at the last step
+('a herd of sheep walking across green grass.', 'Three animals walking down the a busy street.', 'The rowing crew is rowing down the canal/')
+do not run corrector at the last step
+('The donuts are slowly going down the assembly line.', 'A very big red city bus by a big building.', 'some pink flowers are in a green vase')
+do not run corrector at the last step
+('A man wearing a collar shirt with a blue tie', 'there is a small black bird next to a pizza box', 'A professional tennis player waits for the ball to come to him.')
+do not run corrector at the last step
+("The back of a microwave and it's plugs.", 'A young cat stands on a computer desk.', 'A group of people swimming in beach water')
+do not run corrector at the last step
+('some food is in a pot on a table', 'An elephant with large tusk grazing on a grassy field.', 'A bathroom with a white bath tub under a window.')
+do not run corrector at the last step
+('This is a picture of a persons garage sale.', 'A man holding a tennis racket and ball as if to start a serve.', 'A horse crossing a street near a field and trees.')
+do not run corrector at the last step
+('A large elephant rests on a black pole.', 'Two men riding on the backs of horses in a dry grass field.', 'Black leather sofa in a room with white walls')
+do not run corrector at the last step
+('A picture of an elephant coming out of the water.', 'A stack of pan cakes sitting on top of a black table.', 'Two cars and a motorcycle are parked in the same small spot at various times.')
+do not run corrector at the last step
+('A computer that is on a shelve in a room.', 'a polar bear sticking its black tongue out', 'The building sits at a street corner with several different street signs.')
+do not run corrector at the last step
+('A young man playing on a laptop sitting in his lap.', 'A couple of zebra standing next to a rhino.', 'A white tiered cake decorated with holly and a tray of cupcakes')
+do not run corrector at the last step
+('A boy holding two remotes in a room', 'Man on a wake board on a lake.', "A baby girl places her hand upon a baby boy's forehead. ")
+do not run corrector at the last step
+('A bicycle leans against a graffitied cement wall.', 'A bathroom with tiled walls is being re-modeled.', 'A car parked on a lush green field.')
+do not run corrector at the last step
+('A empty living room area with a mat on the floor, and balloons.', 'a man is holding his skis up while on a bench', 'A close up view of a cheesy pizza in front of a person.')
+do not run corrector at the last step
+('A large group of people at a table using laptops.', 'Beach chairs and an umbrella on a crowded beach.', 'A man helping a girl cut a birthday cake with a knife.')
+do not run corrector at the last step
+('A living room with home office, sofa and coffee table', 'a brown and yellow bird is sitting on a white railing', 'The man is getting ready to ski down the slopes. ')
+do not run corrector at the last step
+('A herd of sheep eating grass in the fields.', 'A person is standing over a window over the kitchen sink.', 'A group of people with umbrellas on the street.')
+do not run corrector at the last step
+('A cat is standing on partially a laptop and the computer desk. ', 'In a small bathroom area there is a toilet and a sink and a toilet paper holder.', 'a white cat seated under an umbrella on the floor')
+do not run corrector at the last step
+('a couple of birds standing on a dock ', 'A picture of two teams playing baseball together.', 'a big red bus that is parked next to a building')
+do not run corrector at the last step
+('A woman standing near some monitors holding a microphone.', 'A laptop computer sitting next to knitting equpment.', 'A cowboy in black riding a horse to round up some steers.')
+do not run corrector at the last step
+('A waffle and chicken sandwich with syrup on top', 'A small brown dog wearing a leash next to a bike.', 'a person jumping in the air on to a bed ')
+do not run corrector at the last step
+('This is a nice living room set up with two couches and a television.', 'Three traffic lights with a house in the background.', 'Enforcement personnel in small rubber craft on waterway.')
+do not run corrector at the last step
+('A cityscape of Hong Kong replete with neon signs.', 'a young boy feeding a giraffe over a fence', 'A person skiing downhill on a snow covered slope with trees on the trail.')
+do not run corrector at the last step
+('An old photo of a small family kitchen.', 'A woman and man laying on top of a bench in front of a city.', 'A laptop is on a shelf above a stove with a pot on it.')
+do not run corrector at the last step
+('a person taking a picture of the back end of their big truck ', 'A dog with a frisbee in its mouth in a field with other dogs.', 'Home plate, as left handed batter has just hit the ball.')
+do not run corrector at the last step
+('A female tennis player holding a tennis racket.', 'A man standing on a beach in front of the ocean.', 'People standing on a crowded sidewalk in the evening, many holding umbrellas.')
+do not run corrector at the last step
+('A bird of prey with a fish in its claws', 'A baseball player at home plate swinging the bat.', 'The motor cycle is parked near the curb.')
+do not run corrector at the last step
+('Chocolate cake and ice cream on a plate with a fork stuck in the cake. ', 'A cat sitting on a car parked outside a building at night.', 'A young boy watches a pitch go by in a little league game')
+do not run corrector at the last step
+('A woman sitting on bench eating food with people riding bikes behind her.', 'A small bird is perched on a branch in a tree.', 'A tree that is growing oranges on it.')
+do not run corrector at the last step
+('Tug boats do a good job handling water emergencies.', 'A young man is sitting in a chair and has mismatched outfit and a name badge.', 'The counter of a coffee shop advertises additional seating downstairs.')
+do not run corrector at the last step
+('Man with sleeping bag and backpack sitting on bench near fire hydrant.', 'A little girl in a high chair eating an entire cake.', 'Hand holding a mobile phone with a person standing in front.')
+do not run corrector at the last step
+('A Stop sign is at the corner of a grassy area.', 'A family standing next to each other while holding frisbees.', 'A group of people standing in some small boats.')
+do not run corrector at the last step
+('A black steer standing next to a brown steer lying down.', 'A bathroom with a toilet, black rugs and a black shelf stand.', 'THERE IS A WOMAN WALKING THE SIDE WALK')
+do not run corrector at the last step
+('A black and gray dog resting in a purple chair.', 'A cell phone on top of a calculator near a computer keyboard.', 'a hand holding a hot dog at a baseball game')
+do not run corrector at the last step
+('Boy on a skateboard coming down from the top of a blue and green statue.', 'An ornate gold clock hangs in the lobby of a terminal.', 'A young boy rides his board in the snow.')
+do not run corrector at the last step
+('A man standing next to a fake cow, and smiling for the camera.', 'A WOMAN IS LOOKING AT A SINK IN A CROWD', 'an old pickup truck with the motor exposed ')
+do not run corrector at the last step
+('A herd of Elephant protecting a young Elephant.', 'A bus yard filled with lots of yellow school buses.', 'a sandwich on a white plate a drink on a brown table')
+do not run corrector at the last step
+('Happy man in a suit with bright blue suit and fun tie.', 'A woman holds a dish with food in it.', 'a man standing next to a motorcycle ')
+do not run corrector at the last step
+('A man is walking down the street eating a huge sandwich.', 'A tree filled with lots of unripe bananas.', 'a large castle in front of a clear sky')
+do not run corrector at the last step
+('assorted electronic devices sitting together in a photo', 'a beige cat looking into a big mirror ', 'A person in blue grabbing a sno0wboard in the air')
+do not run corrector at the last step
+('two plates of food on two plates on a table', 'A single toothbrush sits in a handmade toothbrush holder.', 'Chef preparing meals doe guests at restaurant or oriental foods.')
+do not run corrector at the last step
+('A three course meal is sitting at the table in perfect formation.', 'A man trying to snowboard in the dark.', 'Several sheep are in a grassy field with trees.')
+do not run corrector at the last step
+('A person is sitting under an umbrella next to a duck pond.', 'A cat sitting on top of a window sill over a sink.', 'A person looks through the holes of a pair of scissors. ')

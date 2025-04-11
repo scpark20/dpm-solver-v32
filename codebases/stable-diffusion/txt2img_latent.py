@@ -213,9 +213,7 @@ def main():
 
     sample_path = os.path.join(outpath, "samples")
     os.makedirs(sample_path, exist_ok=True)
-    base_count = len(os.listdir(sample_path))
-    grid_count = len(os.listdir(outpath)) - 1
-
+    
     start_code = None
     if opt.fixed_code:
         start_code = torch.randn([opt.n_samples, opt.C, opt.H // opt.f, opt.W // opt.f], device=device)
@@ -224,72 +222,48 @@ def main():
     with torch.no_grad():
         with precision_scope("cuda"):
             with model.ema_scope():
-                tic = time.time()
-                all_samples = list()
-                for n in trange(opt.n_iter, desc="Sampling"):
-                    for prompts in tqdm(data, desc="data"):
-                        uc = None
-                        if config.model.params.cond_stage_config == "__is_unconditional__":
-                            c = None
-                        else:
-                            if opt.scale != 1.0:
-                                uc = model.get_learned_conditioning(batch_size * [""])
-                            if isinstance(prompts, tuple):
-                                prompts = list(prompts)
-                            c = model.get_learned_conditioning(prompts)
-                        shape = [opt.C, opt.H // opt.f, opt.W // opt.f]
-                        if opt.method == "dpm_solver_v3":
-                            # batch_size, shape, conditioning, x_T, unconditional_conditioning
-                            samples, _ = sampler.sample(
-                                conditioning=c,
-                                batch_size=opt.n_samples,
-                                shape=shape,
-                                unconditional_conditioning=uc,
-                                x_T=start_code,
-                                use_corrector=opt.scale < 5.0,
-                            )
-                        else:
-                            samples, _ = sampler.sample(
-                                S=opt.steps,
-                                conditioning=c,
-                                batch_size=opt.n_samples,
-                                shape=shape,
-                                verbose=False,
-                                unconditional_guidance_scale=opt.scale,
-                                unconditional_conditioning=uc,
-                                eta=opt.ddim_eta,
-                                x_T=start_code,
-                            )
+                for prompt_index, prompts in tqdm(enumerate(data), desc="data"):
+                    print(prompts)
+                    uc = None
+                    if config.model.params.cond_stage_config == "__is_unconditional__":
+                        c = None
+                    else:
+                        if opt.scale != 1.0:
+                            uc = model.get_learned_conditioning(batch_size * [""])
+                        if isinstance(prompts, tuple):
+                            prompts = list(prompts)
+                        c = model.get_learned_conditioning(prompts)
+                    shape = [opt.C, opt.H // opt.f, opt.W // opt.f]
+                    if opt.method == "dpm_solver_v3":
+                        # batch_size, shape, conditioning, x_T, unconditional_conditioning
+                        samples, _ = sampler.sample(
+                            conditioning=c,
+                            batch_size=opt.n_samples,
+                            shape=shape,
+                            unconditional_conditioning=uc,
+                            x_T=start_code,
+                            use_corrector=opt.scale < 5.0,
+                        )
+                    else:
+                        samples, _ = sampler.sample(
+                            S=opt.steps,
+                            conditioning=c,
+                            batch_size=opt.n_samples,
+                            shape=shape,
+                            verbose=False,
+                            unconditional_guidance_scale=opt.scale,
+                            unconditional_conditioning=uc,
+                            eta=opt.ddim_eta,
+                            x_T=start_code,
+                        )
 
-                        x_samples = model.decode_first_stage(samples)
-                        x_samples = torch.clamp((x_samples + 1.0) / 2.0, min=0.0, max=1.0)
-                        x_samples = x_samples.cpu().permute(0, 2, 3, 1).numpy()
-
-                        x_image_torch = torch.from_numpy(x_samples).permute(0, 3, 1, 2)
-
-                        for x_sample in x_image_torch:
-                            x_sample = 255.0 * rearrange(x_sample.cpu().numpy(), "c h w -> h w c")
-                            img = Image.fromarray(x_sample.astype(np.uint8))
-                            img.save(os.path.join(sample_path, f"{base_count:05}.png"))
-                            base_count += 1
-
-                        all_samples.append(x_image_torch)
-
-                # additionally, save as grid
-                grid = torch.stack(all_samples, 0)
-                grid = rearrange(grid, "n b c h w -> (n b) c h w")
-                grid = make_grid(grid, nrow=n_rows)
-
-                # to image
-                grid = 255.0 * rearrange(grid, "c h w -> h w c").cpu().numpy()
-                img = Image.fromarray(grid.astype(np.uint8))
-                img.save(os.path.join(outpath, f"grid-{grid_count:04}.png"))
-                grid_count += 1
-
-                toc = time.time()
-
-    print(f"Your samples are ready and waiting for you here: \n{outpath} \n" f" \nEnjoy.")
-
-
+                    latent = start_code.cpu()
+                    image = samples.cpu()
+                    text = prompts
+                    torch.save({'latent': latent,
+                               'image': image,
+                               'text': text
+                               }, os.path.join(outpath, f"{prompt_index}.pt"))
+                               
 if __name__ == "__main__":
     main()
