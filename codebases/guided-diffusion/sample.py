@@ -48,6 +48,12 @@ def parse_args_and_config():
         help="scale dir to load",
     )
     parser.add_argument(
+        "--variant",
+        type=str,
+        default='bh2',
+        help="unipc variant",
+    )
+    parser.add_argument(
         "--skip_type",
         type=str,
         default="time_uniform",
@@ -55,6 +61,8 @@ def parse_args_and_config():
     )
     parser.add_argument("--timesteps", type=int, default=10, help="Number of steps for sampling")
     parser.add_argument("--order", type=int, default=2, help="Order of dpm-solver")
+    parser.add_argument("--predictor_order", type=int, default=2, help="Order of predictor")
+    parser.add_argument("--corrector_order", type=int, default=2, help="Order of corrector")
     parser.add_argument(
         "--eta",
         type=float,
