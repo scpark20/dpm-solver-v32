@@ -431,3 +431,12 @@ do not run corrector at the last step
 ('A three course meal is sitting at the table in perfect formation.', 'A man trying to snowboard in the dark.', 'Several sheep are in a grassy field with trees.')
 do not run corrector at the last step
 ('A person is sitting under an umbrella next to a duck pond.', 'A cat sitting on top of a window sill over a sink.', 'A person looks through the holes of a pair of scissors. ')
+['/home/logpx/scpark/dpm-solver-v32/codebases/stable-diffusion', '/home/logpx/miniconda3/envs/rbf/lib/python311.zip', '/home/logpx/miniconda3/envs/rbf/lib/python3.11', '/home/logpx/miniconda3/envs/rbf/lib/python3.11/lib-dynload', '/home/logpx/.local/lib/python3.11/site-packages', '/home/logpx/miniconda3/envs/rbf/lib/python3.11/site-packages', '/home/logpx/scpark/dpm-solver-v32/codebases/stable-diffusion/src/taming-transformers', '/home/logpx/scpark/dpm-solver-v32/codebases/stable-diffusion/src/clip', '/home/logpx/miniconda3/envs/rbf/lib/python3.11/site-packages/setuptools/_vendor', '/tmp/tmpckl_5eoq']
+Loading model from models/ldm/stable-diffusion-v1/sd-v1-4.ckpt
+Global Step: 470000
+LatentDiffusion: Running in eps-prediction mode
+DiffusionWrapper has 859.52 M params.
+making attention of type 'vanilla' with 512 in_channels
+Working with z of shape (1, 4, 32, 32) = 4096 dimensions.
+making attention of type 'vanilla' with 512 in_channels
+reading prompts from prompts/prompts.txt
