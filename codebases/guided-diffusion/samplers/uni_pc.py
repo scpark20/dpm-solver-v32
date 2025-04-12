@@ -199,8 +199,105 @@ class NoiseScheduleVP:
             )
             t = t_fn(log_alpha)
             return t
+        
+import torch
 
+def model_wrapper_chunk(
+    model,
+    noise_schedule,
+    model_type="noise",
+    model_kwargs=None,
+    guidance_type="uncond",
+    condition=None,
+    unconditional_condition=None,
+    guidance_scale=1.0,
+    classifier_fn=None,
+    classifier_kwargs=None,
+    chunk_size=16,
+    device='cuda',
+):
+    if model_kwargs is None:
+        model_kwargs = {}
+    if classifier_kwargs is None:
+        classifier_kwargs = {}
 
+    def expand_dims(v, dims):
+        return v.view(-1, *([1]*(dims-1)))
+
+    def get_model_input_time(t):
+        if noise_schedule.schedule == "discrete":
+            return (t - 1.0 / noise_schedule.total_N) * 1000.0
+        else:
+            return t
+
+    def _model_forward_chunked(x, t_in, cond=None):
+        B = x.shape[0]
+        outs = []
+        for i in range(0, B, chunk_size):
+            x_sub = x[i:i+chunk_size].to(device)
+            t_sub = t_in[i:i+chunk_size].to(device)
+            if cond is not None:
+                c_sub = cond[i:i+chunk_size].to(device)
+                out_sub = model(x_sub, t_sub, c_sub, **model_kwargs)
+            else:
+                out_sub = model(x_sub, t_sub, **model_kwargs)
+            outs.append(out_sub.cpu())
+        return torch.cat(outs, dim=0)
+
+    def noise_pred_fn(x, t_continuous, cond=None):
+        if t_continuous.numel() == 1:
+            t_continuous = t_continuous.expand(x.shape[0])
+        t_in = get_model_input_time(t_continuous)
+        raw_out = _model_forward_chunked(x, t_in, cond=cond)
+        if model_type == "noise":
+            return raw_out
+        elif model_type == "x_start":
+            alpha_t = noise_schedule.marginal_alpha(t_continuous)
+            sigma_t = noise_schedule.marginal_std(t_continuous)
+            return (x - expand_dims(alpha_t, x.dim())*raw_out) / expand_dims(sigma_t, x.dim())
+        elif model_type == "v":
+            alpha_t = noise_schedule.marginal_alpha(t_continuous)
+            sigma_t = noise_schedule.marginal_std(t_continuous)
+            return expand_dims(alpha_t, x.dim())*raw_out + expand_dims(sigma_t, x.dim())*x
+        elif model_type == "score":
+            sigma_t = noise_schedule.marginal_std(t_continuous)
+            return -expand_dims(sigma_t, x.dim())*raw_out
+        else:
+            raise NotImplementedError()
+
+    def cond_grad_fn(x, t_in):
+        with torch.enable_grad():
+            x_in = x.detach().requires_grad_(True).to(device)
+            t_in_dev = t_in.to(device)
+            log_prob = classifier_fn(x_in, t_in_dev, condition, **classifier_kwargs)
+            grad = torch.autograd.grad(log_prob.sum(), x_in)[0]
+        return grad.cpu()
+
+    def model_fn(x, t_continuous):
+        if t_continuous.numel() == 1:
+            t_continuous = t_continuous.expand(x.shape[0])
+        if guidance_type == "uncond":
+            return noise_pred_fn(x, t_continuous)
+        elif guidance_type == "classifier":
+            grad = cond_grad_fn(x, get_model_input_time(t_continuous))
+            sigma_t = noise_schedule.marginal_std(t_continuous)
+            return noise_pred_fn(x, t_continuous) - guidance_scale*expand_dims(sigma_t, grad.dim())*grad
+        elif guidance_type == "classifier-free":
+            if guidance_scale == 1.0 or unconditional_condition is None:
+                return noise_pred_fn(x, t_continuous, cond=condition)
+            else:
+                xx = torch.cat([x, x], dim=0)
+                tt = torch.cat([t_continuous, t_continuous], dim=0)
+                cc = torch.cat([unconditional_condition, condition], dim=0)
+                out = _model_forward_chunked(xx, get_model_input_time(tt), cc)
+                out_uncond, out_cond = out.chunk(2, dim=0)
+                return out_uncond + guidance_scale*(out_cond - out_uncond)
+        else:
+            raise ValueError(f"Invalid guidance_type: {guidance_type}")
+
+    return model_fn
+
+        
 def model_wrapper(
     model,
     noise_schedule,
@@ -373,7 +470,6 @@ def model_wrapper(
     assert model_type in ["noise", "x_start", "v"]
     assert guidance_type in ["uncond", "classifier", "classifier-free"]
     return model_fn
-
 
 class UniPC:
     def __init__(
