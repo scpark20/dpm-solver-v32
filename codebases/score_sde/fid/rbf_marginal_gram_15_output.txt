@@ -1,0 +1,3 @@
+name : rbf_marginal_gram
+step : 15
+FID  : 3.9196252822875977
