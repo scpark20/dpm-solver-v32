@@ -410,6 +410,7 @@ class RBFSolverECPMarginal:
                t_start=None, t_end=None,
                order=3, skip_type='logSNR', method='data_prediction',
                lower_order_final=True,
+               denoise_to_zero=False,
                 log_scale_p=2.0,
                 log_scale_c=0.0,
                 ):
