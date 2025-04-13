@@ -94,8 +94,9 @@ def sample(config, ckp_path, pair_npz, scale_dir):
     sampling_fn = sampling.get_sampling_fn(config, sde, sampling_shape, inverse_scaler, target_matching=True, scale_dir=scale_dir)
     sampling_fn = functools.partial(sampling_fn, score_model)
     data = np.load(pair_npz)
-    x = torch.tensor(data['prior'], device=config.device)
-    target = torch.tensor(data['target'], device=config.device)
+    x = torch.tensor(data['prior'][:256], device=config.device)
+    target = torch.tensor(data['target'][:256], device=config.device)
+    print('x.shape :', x.shape, 'target.shape :', target.shape)
     samples_raw, n = sampling_fn(x, target)
 
 if __name__ == "__main__":
