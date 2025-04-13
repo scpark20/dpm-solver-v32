@@ -2,7 +2,7 @@ import os
 import logging
 import time
 import glob
-from tkinter import E
+#from tkinter import E
 
 import numpy as np
 import tqdm
