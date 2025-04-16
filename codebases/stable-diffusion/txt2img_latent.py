@@ -70,9 +70,8 @@ def load_replacement(x):
         return y
     except Exception:
         return x
-
-
-def main():
+    
+def get_parser():
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
@@ -178,6 +177,11 @@ def main():
     parser.add_argument(
         "--precision", type=str, help="evaluate at this precision", choices=["full", "autocast"], default="autocast"
     )
+    return parser
+
+
+def main():
+    parser = get_parser()
     opt = parser.parse_args()
 
     seed_everything(opt.seed)
