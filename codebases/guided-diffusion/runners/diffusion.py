@@ -10,6 +10,7 @@ import torch
 import torch.utils.data as data
 import torch.distributed as dist
 
+from models.improved_ddpm.unet import UNetModel as ImprovedDDPM_Model
 from models.guided_diffusion.unet import UNetModel as GuidedDiffusion_Model
 from models.guided_diffusion.unet import EncoderUNetModel as GuidedDiffusion_Classifier
 
@@ -105,8 +106,24 @@ class Diffusion(object):
         self.sample_raw_flag = False
 
     def prepare_model(self):
+        if self.config.model.model_type == 'improved_ddpm':
+            model = ImprovedDDPM_Model(
+                in_channels=self.config.model.in_channels,
+                model_channels=self.config.model.model_channels,
+                out_channels=self.config.model.out_channels,
+                num_res_blocks=self.config.model.num_res_blocks,
+                attention_resolutions=self.config.model.attention_resolutions,
+                dropout=self.config.model.dropout,
+                channel_mult=self.config.model.channel_mult,
+                conv_resample=self.config.model.conv_resample,
+                dims=self.config.model.dims,
+                use_checkpoint=self.config.model.use_checkpoint,
+                num_heads=self.config.model.num_heads,
+                num_heads_upsample=self.config.model.num_heads_upsample,
+                use_scale_shift_norm=self.config.model.use_scale_shift_norm
+            )
 
-        if self.config.model.model_type == "guided_diffusion":
+        elif self.config.model.model_type == "guided_diffusion":
             model = GuidedDiffusion_Model(
                 image_size=self.config.model.image_size,
                 in_channels=self.config.model.in_channels,
@@ -179,7 +196,23 @@ class Diffusion(object):
         self.sample()
 
     def sample(self):
-        if self.config.model.model_type == "guided_diffusion":
+        if self.config.model.model_type == 'improved_ddpm':
+            model = ImprovedDDPM_Model(
+                in_channels=self.config.model.in_channels,
+                model_channels=self.config.model.model_channels,
+                out_channels=self.config.model.out_channels,
+                num_res_blocks=self.config.model.num_res_blocks,
+                attention_resolutions=self.config.model.attention_resolutions,
+                dropout=self.config.model.dropout,
+                channel_mult=self.config.model.channel_mult,
+                conv_resample=self.config.model.conv_resample,
+                dims=self.config.model.dims,
+                use_checkpoint=self.config.model.use_checkpoint,
+                num_heads=self.config.model.num_heads,
+                num_heads_upsample=self.config.model.num_heads_upsample,
+                use_scale_shift_norm=self.config.model.use_scale_shift_norm
+            )
+        elif self.config.model.model_type == "guided_diffusion":
             model = GuidedDiffusion_Model(
                 image_size=self.config.model.image_size,
                 in_channels=self.config.model.in_channels,
@@ -295,7 +328,7 @@ class Diffusion(object):
                     np.savez_compressed(path,
                                         noises_raw=noise.cpu(),
                                         datas_raw=x.cpu(),
-                                        classes=classes.cpu())
+                                        classes=classes.cpu() if classes is not None else 0)
                 else:
                     x = inverse_data_transform(config, x)
                     for i in range(x.shape[0]):
