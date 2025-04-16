@@ -18,6 +18,7 @@ from ldm.util import instantiate_from_config
 from ldm.models.diffusion.ddim import DDIMSampler
 from ldm.models.diffusion.plms import PLMSSampler
 from ldm.models.diffusion.dpm_solver import DPMSolverSampler
+from ldm.models.diffusion.rbf import RBFSampler
 from ldm.models.diffusion.uni_pc import UniPCSampler
 from ldm.models.diffusion.uni_pc import UniPCbh1Sampler
 from ldm.models.diffusion.uni_pc import UniPCbh2Sampler
@@ -90,7 +91,7 @@ def get_parser():
         default=50,
         help="number of sampling steps",
     )
-    parser.add_argument("--method", default="ddim", choices=["ddim", "plms", "dpm_solver++", "uni_pc", "uni_pc_bh1", "uni_pc_bh2", "dpm_solver_v3"])
+    parser.add_argument("--method", default="ddim", choices=["ddim", "plms", "dpm_solver++", "uni_pc", "uni_pc_bh1", "uni_pc_bh2", "dpm_solver_v3", "rbf"])
     parser.add_argument(
         "--fixed_code",
         action="store_true",
@@ -107,6 +108,12 @@ def get_parser():
         type=int,
         default=2,
         help="sample this often",
+    )
+    parser.add_argument(
+        "--order",
+        type=int,
+        default=2,
+        help="order to sample",
     )
     parser.add_argument(
         "--n_samples",
@@ -138,6 +145,7 @@ def get_parser():
         help="the seed (for reproducible sampling)",
     )
     parser.add_argument("--statistics_dir", type=str, default=None, help="Statistics path for DPM-Solver-v3.")
+    parser.add_argument("--scale_dir", type=str, default=None, help="Scale dir for scale parameters")
     parser.add_argument(
         "--config",
         type=str,
@@ -192,7 +200,7 @@ def main():
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     model = model.to(device)
     samplers = {"ddim": DDIMSampler, "plms": PLMSSampler, "dpm_solver++": DPMSolverSampler, "uni_pc": UniPCSampler,
-                "uni_pc_bh1": UniPCbh1Sampler, "uni_pc_bh2": UniPCbh2Sampler
+                "uni_pc_bh1": UniPCbh1Sampler, "uni_pc_bh2": UniPCbh2Sampler, "rbf": RBFSampler
                 }
 
     if opt.method in samplers.keys():
@@ -251,6 +259,20 @@ def main():
                             unconditional_conditioning=uc,
                             x_T=start_code,
                             use_corrector=opt.scale < 5.0,
+                        )
+                    elif opt.method == "rbf":
+                        samples, _ = sampler.sample(
+                            S=opt.steps,
+                            conditioning=c,
+                            batch_size=opt.n_samples,
+                            shape=shape,
+                            verbose=False,
+                            unconditional_guidance_scale=opt.scale,
+                            unconditional_conditioning=uc,
+                            eta=opt.ddim_eta,
+                            x_T=start_code,
+                            order=opt.order,
+                            scale_dir=opt.scale_dir,
                         )
                     else:
                         samples, _ = sampler.sample(

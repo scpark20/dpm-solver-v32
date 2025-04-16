@@ -38,6 +38,7 @@ class RBFSampler(object):
         verbose=True,
         x_T=None,
         order=2,
+        scale_dir=None,
         log_every_t=100,
         unconditional_guidance_scale=1.0,
         unconditional_conditioning=None,
@@ -85,7 +86,7 @@ class RBFSampler(object):
             )
             ORDER = 2
 
-        rbf = RBFSolverECPMarginal(model_fn, ns)
+        rbf = RBFSolverECPMarginal(model_fn, ns, scale_dir=scale_dir)
         x = rbf.sample(
             img, steps=S, skip_type="time_uniform", method="data_prediction", order=order, lower_order_final=True
         )
