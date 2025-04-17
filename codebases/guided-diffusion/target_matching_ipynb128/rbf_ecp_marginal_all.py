@@ -32,7 +32,7 @@ for scale in [2.0, 4.0, 6.0, 8.0]:
 
     from sample import parse_args_and_config, Diffusion
 
-    for NFE in [5, 10, 15, 20, 25, 30]:
+    for NFE in [6, 8, 12]:
         for order in [2, 3]:
             ###############################################################################
             # 1) Notebook에서 sys.argv를 직접 설정 (argparse 흉내)
