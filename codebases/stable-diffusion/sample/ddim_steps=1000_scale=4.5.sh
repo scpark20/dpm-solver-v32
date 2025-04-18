@@ -2,7 +2,7 @@
 
 prompts='prompts/prompts.txt'
 model='sd-v1-4'
-scale='3.5'
+scale='4.5'
 
 config="configs/stable-diffusion/v1-inference.yaml"
 ckpt="models/ldm/stable-diffusion-v1/sd-v1-4.ckpt"
