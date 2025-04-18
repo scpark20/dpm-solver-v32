@@ -15,7 +15,7 @@ for steps in 1000
 do
   for sampleMethod in 'ddim'
   do
-    python txt2img_latent.py --fixed_code \
+    CUDA_VISIBLE_DEVICES='3' python txt2img_latent.py --fixed_code \
       --from-file "$prompts" \
       --steps "$steps" \
       --outdir "outputs/${model}/${sampleMethod}_steps${steps}_scale${scale}" \
