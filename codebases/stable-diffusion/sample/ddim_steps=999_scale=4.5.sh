@@ -11,7 +11,7 @@ W=512
 C=4
 f=8
 
-for steps in 1000
+for steps in 999
 do
   for sampleMethod in 'ddim'
   do
