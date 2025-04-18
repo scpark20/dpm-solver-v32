@@ -16,7 +16,7 @@ for steps in 200
 do
   for sampleMethod in 'dpm_solver++'
   do
-    CUDA_VISIBLE_DEVICE='2' python txt2img_latent.py --fixed_code \
+    CUDA_VISIBLE_DEVICES='2' python txt2img_latent.py --fixed_code \
       --from-file "$prompts" \
       --steps "$steps" \
       --statistics_dir "$STATS_DIR" \
