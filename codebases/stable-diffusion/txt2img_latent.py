@@ -19,6 +19,7 @@ from ldm.models.diffusion.ddim import DDIMSampler
 from ldm.models.diffusion.plms import PLMSSampler
 from ldm.models.diffusion.dpm_solver import DPMSolverSampler
 from ldm.models.diffusion.rbf import RBFSampler
+from ldm.models.diffusion.rbf import RBFEulerSampler
 from ldm.models.diffusion.uni_pc import UniPCSampler
 from ldm.models.diffusion.uni_pc import UniPCbh1Sampler
 from ldm.models.diffusion.uni_pc import UniPCbh2Sampler
@@ -91,7 +92,7 @@ def get_parser():
         default=50,
         help="number of sampling steps",
     )
-    parser.add_argument("--method", default="ddim", choices=["ddim", "plms", "dpm_solver++", "uni_pc", "uni_pc_bh1", "uni_pc_bh2", "dpm_solver_v3", "rbf"])
+    parser.add_argument("--method", default="ddim", choices=["ddim", "plms", "dpm_solver++", "uni_pc", "uni_pc_bh1", "uni_pc_bh2", "dpm_solver_v3", "rbf", 'rbf_euler'])
     parser.add_argument(
         "--fixed_code",
         action="store_true",
@@ -200,7 +201,7 @@ def main():
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     model = model.to(device)
     samplers = {"ddim": DDIMSampler, "plms": PLMSSampler, "dpm_solver++": DPMSolverSampler, "uni_pc": UniPCSampler,
-                "uni_pc_bh1": UniPCbh1Sampler, "uni_pc_bh2": UniPCbh2Sampler, "rbf": RBFSampler
+                "uni_pc_bh1": UniPCbh1Sampler, "uni_pc_bh2": UniPCbh2Sampler, "rbf": RBFSampler, 'rbf_euler': RBFEulerSampler
                 }
 
     if opt.method in samplers.keys():

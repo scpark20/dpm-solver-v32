@@ -2,7 +2,7 @@
 
 prompts='prompts/prompts.txt'
 model='sd-v1-4'
-scale='10.5'
+scale='7.5'
 
 config="configs/stable-diffusion/v1-inference.yaml"
 ckpt="models/ldm/stable-diffusion-v1/sd-v1-4.ckpt"
@@ -11,16 +11,18 @@ W=512
 C=4
 f=8
 
-for steps in 999
+for steps in 1000
 do
-  for sampleMethod in 'ddim'
+  for sampleMethod in 'rbf_euler'
   do
-    CUDA_VISIBLE_DEVICES='3' python txt2img_latent.py --fixed_code \
+    CUDA_VISIBLE_DEVICES='0' python txt2img_latent.py --fixed_code \
       --from-file "$prompts" \
       --steps "$steps" \
+      --statistics_dir "$STATS_DIR" \
       --outdir "outputs/${model}/${sampleMethod}_steps${steps}_scale${scale}" \
       --method "$sampleMethod" \
       --scale "$scale" \
+      --scale_dir "$SCALE_DIR" \
       --config "$config" \
       --ckpt "$ckpt" \
       --H "$H" \

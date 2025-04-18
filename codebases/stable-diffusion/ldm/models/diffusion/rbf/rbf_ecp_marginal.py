@@ -783,6 +783,7 @@ class RBFSolverECPMarginal:
                denoise_to_zero=False,
                 log_scale_p=2.0,
                 log_scale_c=0.0,
+                predictor_only=False
                 ):
         # log_scale : predictor, corrector 모든 step에 적용할 log_scale, log_scales가 load안되면 log_scale로 작동
         # log_scales : predictor, corrector, step별로 적용할 log_scale array, shape : (2, NFE)
@@ -828,6 +829,10 @@ class RBFSolverECPMarginal:
                 # predictor로 구한 x_pred를 이용해서 model_fn 평가
                 hist[i+1] = self.model_fn(x_pred, timesteps[i+1])
                 
+                if predictor_only:
+                    x = x_pred
+                    continue
+
                 # ===corrector===
                 s = log_scale_c if log_scales is None else log_scales[1, i]
                 lagrange = (s >= self.log_scale_max)
