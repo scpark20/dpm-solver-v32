@@ -50,8 +50,8 @@ names = ['dpm_solver++', "uni_pc_bh1", 'dpm_solver_v3', 'rbf_ecp_marginal_2.0_3'
 steps = [5, 6, 8, 10, 12, 15, 20, 25, 30, 35, 40]
 if not os.path.isdir('fid'):
     os.makedirs('fid')
-for name in names:
-    for step in steps:
+for step in steps:    
+    for name in names:
         # 각 name과 step에 해당하는 파일명을 만들고, 결과를 기록
         filename = f"{name}_{step}_output.txt"
         filename = os.path.join('fid', filename)
