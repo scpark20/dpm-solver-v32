@@ -26,8 +26,7 @@ import numpy as np
 from torchvision.utils import make_grid, save_image
 from samplers.dpm_solver import DPM_Solver
 from samplers.uni_pc import UniPC
-from samplers.rbf import RBFSolverGLQ10LagTime as RBF
-from samplers.rbf_unipc import RBFUniPC
+from samplers.rbf_ecp_marginal import RBFSolverECPMarginal
 from samplers.dpm_solver_v3 import DPM_Solver_v3
 from samplers.heun import Heun
 from samplers.utils import NoiseScheduleEDM, model_wrapper
@@ -41,6 +40,7 @@ flags.DEFINE_string("statistics_dir", None, "Statistics path for DPM-Solver-v3."
 flags.DEFINE_string("method", None, "Method: heun/dpm_solver++/uni_pc/dpm_solver_v3")
 flags.DEFINE_string("eval_folder", "samples", "The folder name for storing evaluation results")
 flags.DEFINE_string("sample_folder", "sample", "The folder name for storing samples")
+flags.DEFINE_string("scale_dir", "/data/edm/scale", "The folder name for storing scales")
 flags.DEFINE_string("unipc_variant", "bh1", "UniPC variant: bh1/bh2")
 flags.DEFINE_integer("steps", default=10, help="Number of sampling steps")
 flags.DEFINE_integer("order", default=3, help="Order for sampling")
@@ -61,6 +61,7 @@ def main(argv):
         FLAGS.skip_type,
         FLAGS.denoise_to_zero,
         FLAGS.unipc_variant,
+        FLAGS.scale_dir,
     )
 
 
@@ -75,6 +76,7 @@ def sample(
     skip_type,
     denoise_to_zero,
     unipc_variant,
+    scale_dir,
     batch_size=256,
     num_samples=50000,
     sigma_min=0.002,
@@ -150,8 +152,8 @@ def sample(
 
         sampling_fn = uni_pc_sampler
 
-    elif method == "rbf":
-        rbf = RBF(ns, algorithm_type="data_prediction", correcting_x0_fn=None)
+    elif method == "rbf_ecp_marginal":
+        rbf = RBFSolverECPMarginal(ns, algorithm_type="data_prediction", correcting_x0_fn=None, scale_dir=scale_dir)
 
         def rbf_sampler(model_fn, z):
             with torch.no_grad():
@@ -163,32 +165,10 @@ def sample(
                     t_end=sigma_min,
                     order=order,
                     skip_type=skip_type,
-                    lower_order_final=True,
-                    denoise_to_zero=denoise_to_zero,
                 )
                 return x, steps
 
         sampling_fn = rbf_sampler
-
-    elif method == "rbf_unipc":
-        rbf_unipc = RBFUniPC(ns, algorithm_type="data_prediction", correcting_x0_fn=None, variant=unipc_variant)
-
-        def rbf_unipc_sampler(model_fn, z):
-            with torch.no_grad():
-                x = rbf_unipc.sample(
-                    model_fn,
-                    z,
-                    steps=steps - 1 if denoise_to_zero else steps,
-                    t_start=sigma_max,
-                    t_end=sigma_min,
-                    order=order,
-                    skip_type=skip_type,
-                    lower_order_final=True,
-                    denoise_to_zero=denoise_to_zero,
-                )
-                return x, steps
-
-        sampling_fn = rbf_unipc_sampler
 
     elif method == "dpm_solver_v3":
         assert statistics_dir is not None, "No appropriate statistics found."

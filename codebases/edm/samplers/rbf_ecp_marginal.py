@@ -2,7 +2,7 @@ import os
 import torch
 import torch.nn.functional as F
 import numpy as np
-from .utils import expand_dims
+from .uni_pc import expand_dims
 import math
 
 # ECP-Maginal
@@ -15,8 +15,8 @@ class RBFSolverECPMarginal:
             thresholding_max_val=1.,
             dynamic_thresholding_ratio=0.995,
             scale_dir=None,
-            log_scale_min=-2.0,
-            log_scale_max=2.0,
+            log_scale_min=-3.0,
+            log_scale_max=3.0,
             log_scale_num=33
     ):
         self.noise_schedule = noise_schedule
@@ -311,7 +311,7 @@ class RBFSolverECPMarginal:
 
     def sample_by_target_matching(self, model_fn, x, target,
                                   steps, t_start, t_end, order=3, skip_type='logSNR',
-                                  method='data_prediction', lower_order_final=True):
+                                  method='data_prediction', lower_order_final=True, denoise_to_zero=False, number=0):
         self.model = lambda x, t: model_fn(x, t.expand((x.shape[0])))
         noise_target = x
         data_target = target
@@ -330,10 +330,10 @@ class RBFSolverECPMarginal:
 
             # 실제로 사용할 time step array를 구한다.
             # timesteps는 길이가 steps+1인 1-D 텐서: [t_T, ..., t_0]
-            timesteps = self.get_time_steps(skip_type=skip_type, t_T=t_T, t_0=t_0, N=steps, device=device)
-            lambdas = torch.Tensor([self.noise_schedule.marginal_lambda(t) for t in timesteps])
-            signal_rates = torch.Tensor([self.noise_schedule.marginal_alpha(t) for t in timesteps])
-            noise_rates = torch.Tensor([self.noise_schedule.marginal_std(t) for t in timesteps])
+            timesteps = self.get_time_steps(skip_type=skip_type, t_T=t_T, t_0=t_0, N=steps, device=x.device)
+            lambdas = torch.tensor([self.noise_schedule.marginal_lambda(t) for t in timesteps], device=x.device)
+            signal_rates = torch.tensor([self.noise_schedule.marginal_alpha(t) for t in timesteps], device=x.device)
+            noise_rates = torch.tensor([self.noise_schedule.marginal_std(t) for t in timesteps], device=x.device)
 
             log_scales = np.linspace(self.log_scale_min, self.log_scale_max, self.log_scale_num)
             optimal_log_scales = np.zeros((2, steps))
@@ -387,7 +387,7 @@ class RBFSolverECPMarginal:
             x = x_pred
 
         if self.scale_dir is not None:
-            save_file = os.path.join(self.scale_dir, f'NFE={steps},p={order}.npz')
+            save_file = os.path.join(self.scale_dir, f'NFE={steps},p={order},number={number}.npz')
             np.savez(save_file,
                      optimal_log_scales=optimal_log_scales,
                      loss_grid_list=loss_grid_list)
@@ -405,13 +405,15 @@ class RBFSolverECPMarginal:
         print(load_file, 'loaded!')
         return log_scales
     
-    def sample(self, x, steps,
+    def sample(self, model_fn, x, steps,
                t_start=None, t_end=None,
                order=3, skip_type='logSNR', method='data_prediction',
                lower_order_final=True,
+               denoise_to_zero=False,
                 log_scale_p=2.0,
                 log_scale_c=0.0,
                 ):
+        self.model = lambda x, t: model_fn(x, t.expand((x.shape[0])))
         # log_scale : predictor, corrector 모든 step에 적용할 log_scale, log_scales가 load안되면 log_scale로 작동
         # log_scales : predictor, corrector, step별로 적용할 log_scale array, shape : (2, NFE)
 
