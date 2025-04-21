@@ -8,6 +8,6 @@ else
 STATS_DIR="statistics/edm-cifar10-32x32-uncond-vp/0.002_80.0_120_4096"
 fi
 
-python sample.py --sample_folder="dpm_solver_v3_"$steps --statistics_dir=$STATS_DIR --ckp_path=$CKPT_PATH --method=dpm_solver_v3 --steps=$steps --skip_type=logSNR
+CUDA_VISIBLE_DEVICES="2" python sample.py --sample_folder="dpm_solver_v3_"$steps --statistics_dir=$STATS_DIR --ckp_path=$CKPT_PATH --method=dpm_solver_v3 --steps=$steps --skip_type=logSNR
 
 done
