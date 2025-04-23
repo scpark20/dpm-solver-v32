@@ -6,7 +6,7 @@ from .utils import expand_dims
 import math
 
 # ECP-Maginal
-class RBFSolverECPMarginal:
+class RBFSolverECPMarginalSPD:
     def __init__(
             self,
             model_fn,
@@ -176,29 +176,12 @@ class RBFSolverECPMarginal:
         lambdas = lambdas.to(torch.float64)
         beta = beta.to(torch.float64)
 
-        p = len(lambdas)
         # (p,)
-        integral1 = self.get_integral_vector(lambda_s, lambda_t, lambdas, beta)
-        #print('integral1 :', lambda_s, beta, integral1)
-        # (1,)
-        integral2 = self.get_integral_vector(lambda_s, lambda_t, lambdas[:1], beta=0)
-        
-        # (p+1,)
-        integral_aug = torch.cat([integral1, integral2], dim=0)
-
+        integral = self.get_integral_vector(lambda_s, lambda_t, lambdas, beta)
         # (p, p)
-        kernel = self.get_kernel_matrix(lambdas, beta)
-        eye = torch.eye(p+1, device=kernel.device).to(torch.float64)
-        kernel_aug = 1 - eye
-        kernel_aug[:p, :p] = kernel
+        kernel = self.get_kernel_matrix(lambdas, beta).float()
         # (p,)
-        #coefficients = (integral_aug[None, :] @ torch.linalg.pinv(kernel_aug))[0, :p]    
-        #coefficients = (integral_aug[None, :] @ torch.linalg.inv(kernel_aug))[0, :p]
-        coefficients = torch.linalg.solve(kernel_aug, integral_aug)
-        #coefficients = torch.linalg.lstsq(kernel_aug, integral_aug).solution
-        #coefficients = self.solve_linear_system(kernel_aug, integral_aug)
-        #error = torch.mean(abs(integral_aug - kernel_aug @ coefficients)).item()
-        coefficients = coefficients[:p]  # (p+1,) 중 앞 p개만 슬라이싱
+        coefficients = torch.linalg.solve(kernel, integral)
         return coefficients.float()
 
     def get_lag_kernel_matrix(self, lambdas):

@@ -6,7 +6,7 @@ from .utils import expand_dims
 import math
 
 # ECP-Maginal
-class RBFSolverECPMarginal:
+class RBFSolverECPMarginalSame:
     def __init__(
             self,
             model_fn,
@@ -18,7 +18,7 @@ class RBFSolverECPMarginal:
             scale_dir=None,
             log_scale_min=-2.0,
             log_scale_max=2.0,
-            log_scale_num=33
+            log_scale_num=1000
     ):
         self.model = lambda x, t: model_fn(x, t.expand((x.shape[0])))
         self.noise_schedule = noise_schedule
@@ -338,7 +338,7 @@ class RBFSolverECPMarginal:
 
             log_scales = np.linspace(self.log_scale_min, self.log_scale_max, self.log_scale_num)
             optimal_log_scales = np.zeros((2, steps))
-            loss_grid_list = []
+            loss_line_list = []
             
             hist = [None for _ in range(steps)]
             x_pred = x
@@ -353,16 +353,15 @@ class RBFSolverECPMarginal:
                 hist[i] = self.model_fn(x_pred, timesteps[i])
                 
                 target = signal_rates[i+1]*data_target + noise_rates[i+1]*noise_target
-                if i > 0: # Grid Search
-                    loss_grid = np.full((self.log_scale_num, self.log_scale_num), np.inf)
-                    for pindex, log_scale_p in enumerate(log_scales):
-                        for cindex, log_scale_c in enumerate(log_scales):
-                            loss = self.get_loss_by_target_matching(i, x, target, hist, noise_rates, log_scale_p, log_scale_c, lambdas, p, p_prev)
-                            loss_grid[pindex, cindex] = loss.item()
-                    min_index = np.unravel_index(np.argmin(loss_grid), loss_grid.shape)
-                    optimal_log_scales[0, i] = log_scales[min_index[0]]
-                    optimal_log_scales[1, i-1] = log_scales[min_index[1]]
-                    loss_grid_list.append(loss_grid)
+                if i > 0: # Line Search
+                    loss_line = np.full(self.log_scale_num, np.inf)
+                    for log_index, log_scale in enumerate(log_scales):
+                        loss = self.get_loss_by_target_matching(i, x, target, hist, noise_rates, log_scale, log_scale, lambdas, p, p_prev)
+                        loss_line[log_index] = loss.item()
+                    min_index = np.argmin(loss_line)
+                    optimal_log_scales[0, i] = log_scales[min_index]
+                    optimal_log_scales[1, i-1] = log_scales[min_index]
+                    loss_line_list.append(loss_line)
                     
                 else: # Line Search
                     loss_line = np.full(self.log_scale_num, np.inf)
@@ -392,7 +391,7 @@ class RBFSolverECPMarginal:
             save_file = os.path.join(self.scale_dir, f'NFE={steps},p={order}.npz')
             np.savez(save_file,
                      optimal_log_scales=optimal_log_scales,
-                     loss_grid_list=loss_grid_list)
+                     loss_line_list=loss_line_list)
             print(save_file, ' saved!')
 
         # 최종적으로 x를 반환
