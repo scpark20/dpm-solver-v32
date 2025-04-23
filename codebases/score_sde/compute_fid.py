@@ -46,8 +46,16 @@ def compute_fid(path):
     fid = tfgan.eval.frechet_classifier_distance_from_activations(data_pools, all_pools)
     return fid
 
-names = ["rbf_marginal_gram"]
-steps = [5, 10, 15, 20, 25, 30, 35, 40]
+names = ["rbf_ecp_marginal",
+        "rbf_ecp_marginal4",
+        "rbf_ecp_marginal5",
+        "rbf_ecp_marginal6",
+        "rbf_ecp_marginal_lagc",
+        "rbf_ecp_marginal_lagp",
+        "rbf_ecp_marginal_same",
+        "rbf_ecp_marginal_spd",
+         ]
+steps = [5, 6, 8, 10, 12, 15, 20, 25, 30, 35, 40]
 
 if not os.path.isdir('fid'):
     os.makedirs('fid')
