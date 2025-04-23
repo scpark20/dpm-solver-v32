@@ -2,7 +2,7 @@ CKPT_PATH="/data/checkpoints/cifar10_ddpmpp_deep_continuous/checkpoint_8.pth"
 CONFIG="configs/vp/cifar10_ddpmpp_deep_continuous.py"
 METHOD="rbf_ecp_marginal6"
 SCALE_DIR="/data/score_sde/scale/"${METHOD}
-for steps in 5 6 8 10 12 15 20 25 30 35 40; do
+for steps in 5 6 8 10 12 15 20; do
 
 if [ $steps -le 10 ]; then
     EPS="1e-3"

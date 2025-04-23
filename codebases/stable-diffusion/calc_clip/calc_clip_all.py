@@ -87,7 +87,8 @@ def calc_cosim(pt_path, save_path):
 
 ''' Run '''
 root_dir = '/data/archive/sd-v1-4'
-for scale in [1.5, 3.5, 5.5, 7.5, 9.5]:
+#for scale in [1.5, 3.5, 5.5, 7.5, 9.5]:
+for scale in [9.5]:
     if scale in [1.5, 7.5]:
         model_names = ['dpm_solver++', 'uni_pc_bh2', 'dpm_solver_v3', 'rbf_order2', 'rbf_order3']
     else:
