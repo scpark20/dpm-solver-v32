@@ -626,6 +626,364 @@ class Diffusion(object):
                     number=number,
                 )
 
+        elif self.args.sample_type == "rbf_ecp_marginal_lagc":
+            from samplers.uni_pc import NoiseScheduleVP, model_wrapper, model_wrapper_chunk
+            from samplers.rbf_ecp_marginal_lagc import RBFSolverECPMarginalLagC
+
+            def model_fn(x, t, **model_kwargs):
+                out = model(x, t, **model_kwargs)
+                # If the model outputs both 'mean' and 'variance' (such as improved-DDPM and guided-diffusion),
+                # We only use the 'mean' output for DPM-Solver, because DPM-Solver is based on diffusion ODEs.
+                if "out_channels" in self.config.model.__dict__.keys():
+                    if self.config.model.out_channels == 6:
+                        out = torch.split(out, 3, dim=1)[0]
+                return out
+
+            def classifier_fn(x, t, y, **classifier_kwargs):
+                logits = classifier(x, t)
+                log_probs = torch.nn.functional.log_softmax(logits, dim=-1)
+                return log_probs[range(len(logits)), y.view(-1)]
+
+            noise_schedule = NoiseScheduleVP(schedule="discrete", betas=self.betas)
+            model_fn_continuous = model_wrapper(
+                model_fn,
+                noise_schedule,
+                model_type="noise",
+                model_kwargs=model_kwargs,
+                guidance_type="uncond" if classifier is None else "classifier",
+                condition=model_kwargs["y"] if "y" in model_kwargs.keys() else None,
+                guidance_scale=classifier_scale,
+                classifier_fn=classifier_fn,
+                classifier_kwargs={},
+            )
+            rbf = RBFSolverECPMarginalLagC(
+                model_fn_continuous,
+                noise_schedule,
+                algorithm_type="data_prediction",
+                correcting_x0_fn="dynamic_thresholding" if self.args.thresholding else None,
+                scale_dir=self.args.scale_dir
+            )
+            if target is None:
+                x = rbf.sample(
+                    x,
+                    steps=(self.args.timesteps - 1 if self.args.denoise else self.args.timesteps),
+                    order=self.args.order,
+                    skip_type=self.args.skip_type,
+                    lower_order_final=self.args.lower_order_final,
+                    denoise_to_zero=self.args.denoise,
+                )
+            else:
+                x = rbf.sample_by_target_matching(
+                    x,
+                    target,
+                    steps=(self.args.timesteps - 1 if self.args.denoise else self.args.timesteps),
+                    t_start=None, t_end=None,
+                    order=self.args.order,
+                    skip_type=self.args.skip_type,
+                    lower_order_final=self.args.lower_order_final,
+                    denoise_to_zero=self.args.denoise,
+                    number=number,
+                )        
+
+        elif self.args.sample_type == "rbf_ecp_marginal_lagp":
+            from samplers.uni_pc import NoiseScheduleVP, model_wrapper, model_wrapper_chunk
+            from samplers.rbf_ecp_marginal_lagp import RBFSolverECPMarginalLagP
+
+            def model_fn(x, t, **model_kwargs):
+                out = model(x, t, **model_kwargs)
+                # If the model outputs both 'mean' and 'variance' (such as improved-DDPM and guided-diffusion),
+                # We only use the 'mean' output for DPM-Solver, because DPM-Solver is based on diffusion ODEs.
+                if "out_channels" in self.config.model.__dict__.keys():
+                    if self.config.model.out_channels == 6:
+                        out = torch.split(out, 3, dim=1)[0]
+                return out
+
+            def classifier_fn(x, t, y, **classifier_kwargs):
+                logits = classifier(x, t)
+                log_probs = torch.nn.functional.log_softmax(logits, dim=-1)
+                return log_probs[range(len(logits)), y.view(-1)]
+
+            noise_schedule = NoiseScheduleVP(schedule="discrete", betas=self.betas)
+            model_fn_continuous = model_wrapper(
+                model_fn,
+                noise_schedule,
+                model_type="noise",
+                model_kwargs=model_kwargs,
+                guidance_type="uncond" if classifier is None else "classifier",
+                condition=model_kwargs["y"] if "y" in model_kwargs.keys() else None,
+                guidance_scale=classifier_scale,
+                classifier_fn=classifier_fn,
+                classifier_kwargs={},
+            )
+            rbf = RBFSolverECPMarginalLagP(
+                model_fn_continuous,
+                noise_schedule,
+                algorithm_type="data_prediction",
+                correcting_x0_fn="dynamic_thresholding" if self.args.thresholding else None,
+                scale_dir=self.args.scale_dir
+            )
+            if target is None:
+                x = rbf.sample(
+                    x,
+                    steps=(self.args.timesteps - 1 if self.args.denoise else self.args.timesteps),
+                    order=self.args.order,
+                    skip_type=self.args.skip_type,
+                    lower_order_final=self.args.lower_order_final,
+                    denoise_to_zero=self.args.denoise,
+                )
+            else:
+                x = rbf.sample_by_target_matching(
+                    x,
+                    target,
+                    steps=(self.args.timesteps - 1 if self.args.denoise else self.args.timesteps),
+                    t_start=None, t_end=None,
+                    order=self.args.order,
+                    skip_type=self.args.skip_type,
+                    lower_order_final=self.args.lower_order_final,
+                    denoise_to_zero=self.args.denoise,
+                    number=number,
+                )                
+
+        elif self.args.sample_type == "rbf_ecp_marginal_same":
+            from samplers.uni_pc import NoiseScheduleVP, model_wrapper, model_wrapper_chunk
+            from samplers.rbf_ecp_marginal_same import RBFSolverECPMarginalSame
+
+            def model_fn(x, t, **model_kwargs):
+                out = model(x, t, **model_kwargs)
+                # If the model outputs both 'mean' and 'variance' (such as improved-DDPM and guided-diffusion),
+                # We only use the 'mean' output for DPM-Solver, because DPM-Solver is based on diffusion ODEs.
+                if "out_channels" in self.config.model.__dict__.keys():
+                    if self.config.model.out_channels == 6:
+                        out = torch.split(out, 3, dim=1)[0]
+                return out
+
+            def classifier_fn(x, t, y, **classifier_kwargs):
+                logits = classifier(x, t)
+                log_probs = torch.nn.functional.log_softmax(logits, dim=-1)
+                return log_probs[range(len(logits)), y.view(-1)]
+
+            noise_schedule = NoiseScheduleVP(schedule="discrete", betas=self.betas)
+            model_fn_continuous = model_wrapper(
+                model_fn,
+                noise_schedule,
+                model_type="noise",
+                model_kwargs=model_kwargs,
+                guidance_type="uncond" if classifier is None else "classifier",
+                condition=model_kwargs["y"] if "y" in model_kwargs.keys() else None,
+                guidance_scale=classifier_scale,
+                classifier_fn=classifier_fn,
+                classifier_kwargs={},
+            )
+            rbf = RBFSolverECPMarginalSame(
+                model_fn_continuous,
+                noise_schedule,
+                algorithm_type="data_prediction",
+                correcting_x0_fn="dynamic_thresholding" if self.args.thresholding else None,
+                scale_dir=self.args.scale_dir
+            )
+            if target is None:
+                x = rbf.sample(
+                    x,
+                    steps=(self.args.timesteps - 1 if self.args.denoise else self.args.timesteps),
+                    order=self.args.order,
+                    skip_type=self.args.skip_type,
+                    lower_order_final=self.args.lower_order_final,
+                    denoise_to_zero=self.args.denoise,
+                )
+            else:
+                x = rbf.sample_by_target_matching(
+                    x,
+                    target,
+                    steps=(self.args.timesteps - 1 if self.args.denoise else self.args.timesteps),
+                    t_start=None, t_end=None,
+                    order=self.args.order,
+                    skip_type=self.args.skip_type,
+                    lower_order_final=self.args.lower_order_final,
+                    denoise_to_zero=self.args.denoise,
+                    number=number,
+                )                        
+
+        elif self.args.sample_type == "rbf_ecp_marginal_spd":
+            from samplers.uni_pc import NoiseScheduleVP, model_wrapper, model_wrapper_chunk
+            from samplers.rbf_ecp_marginal_spd import RBFSolverECPMarginalSPD
+
+            def model_fn(x, t, **model_kwargs):
+                out = model(x, t, **model_kwargs)
+                # If the model outputs both 'mean' and 'variance' (such as improved-DDPM and guided-diffusion),
+                # We only use the 'mean' output for DPM-Solver, because DPM-Solver is based on diffusion ODEs.
+                if "out_channels" in self.config.model.__dict__.keys():
+                    if self.config.model.out_channels == 6:
+                        out = torch.split(out, 3, dim=1)[0]
+                return out
+
+            def classifier_fn(x, t, y, **classifier_kwargs):
+                logits = classifier(x, t)
+                log_probs = torch.nn.functional.log_softmax(logits, dim=-1)
+                return log_probs[range(len(logits)), y.view(-1)]
+
+            noise_schedule = NoiseScheduleVP(schedule="discrete", betas=self.betas)
+            model_fn_continuous = model_wrapper(
+                model_fn,
+                noise_schedule,
+                model_type="noise",
+                model_kwargs=model_kwargs,
+                guidance_type="uncond" if classifier is None else "classifier",
+                condition=model_kwargs["y"] if "y" in model_kwargs.keys() else None,
+                guidance_scale=classifier_scale,
+                classifier_fn=classifier_fn,
+                classifier_kwargs={},
+            )
+            rbf = RBFSolverECPMarginalSPD(
+                model_fn_continuous,
+                noise_schedule,
+                algorithm_type="data_prediction",
+                correcting_x0_fn="dynamic_thresholding" if self.args.thresholding else None,
+                scale_dir=self.args.scale_dir
+            )
+            if target is None:
+                x = rbf.sample(
+                    x,
+                    steps=(self.args.timesteps - 1 if self.args.denoise else self.args.timesteps),
+                    order=self.args.order,
+                    skip_type=self.args.skip_type,
+                    lower_order_final=self.args.lower_order_final,
+                    denoise_to_zero=self.args.denoise,
+                )
+            else:
+                x = rbf.sample_by_target_matching(
+                    x,
+                    target,
+                    steps=(self.args.timesteps - 1 if self.args.denoise else self.args.timesteps),
+                    t_start=None, t_end=None,
+                    order=self.args.order,
+                    skip_type=self.args.skip_type,
+                    lower_order_final=self.args.lower_order_final,
+                    denoise_to_zero=self.args.denoise,
+                    number=number,
+                )                        
+
+        elif self.args.sample_type == "rbf_ecp_marginal_to1":
+            from samplers.uni_pc import NoiseScheduleVP, model_wrapper, model_wrapper_chunk
+            from samplers.rbf_ecp_marginal import RBFSolverECPMarginal
+
+            def model_fn(x, t, **model_kwargs):
+                out = model(x, t, **model_kwargs)
+                # If the model outputs both 'mean' and 'variance' (such as improved-DDPM and guided-diffusion),
+                # We only use the 'mean' output for DPM-Solver, because DPM-Solver is based on diffusion ODEs.
+                if "out_channels" in self.config.model.__dict__.keys():
+                    if self.config.model.out_channels == 6:
+                        out = torch.split(out, 3, dim=1)[0]
+                return out
+
+            def classifier_fn(x, t, y, **classifier_kwargs):
+                logits = classifier(x, t)
+                log_probs = torch.nn.functional.log_softmax(logits, dim=-1)
+                return log_probs[range(len(logits)), y.view(-1)]
+
+            noise_schedule = NoiseScheduleVP(schedule="discrete", betas=self.betas)
+            model_fn_continuous = model_wrapper(
+                model_fn,
+                noise_schedule,
+                model_type="noise",
+                model_kwargs=model_kwargs,
+                guidance_type="uncond" if classifier is None else "classifier",
+                condition=model_kwargs["y"] if "y" in model_kwargs.keys() else None,
+                guidance_scale=classifier_scale,
+                classifier_fn=classifier_fn,
+                classifier_kwargs={},
+            )
+            rbf = RBFSolverECPMarginal(
+                model_fn_continuous,
+                noise_schedule,
+                algorithm_type="data_prediction",
+                correcting_x0_fn="dynamic_thresholding" if self.args.thresholding else None,
+                scale_dir=self.args.scale_dir,
+                log_scale_min=-1.0,
+                log_scale_max=-1.0,
+            )
+            if target is None:
+                x = rbf.sample(
+                    x,
+                    steps=(self.args.timesteps - 1 if self.args.denoise else self.args.timesteps),
+                    order=self.args.order,
+                    skip_type=self.args.skip_type,
+                    lower_order_final=self.args.lower_order_final,
+                    denoise_to_zero=self.args.denoise,
+                )
+            else:
+                x = rbf.sample_by_target_matching(
+                    x,
+                    target,
+                    steps=(self.args.timesteps - 1 if self.args.denoise else self.args.timesteps),
+                    t_start=None, t_end=None,
+                    order=self.args.order,
+                    skip_type=self.args.skip_type,
+                    lower_order_final=self.args.lower_order_final,
+                    denoise_to_zero=self.args.denoise,
+                    number=number,
+                )                        
+
+        elif self.args.sample_type == "rbf_ecp_marginal_to3":
+            from samplers.uni_pc import NoiseScheduleVP, model_wrapper, model_wrapper_chunk
+            from samplers.rbf_ecp_marginal import RBFSolverECPMarginal
+
+            def model_fn(x, t, **model_kwargs):
+                out = model(x, t, **model_kwargs)
+                # If the model outputs both 'mean' and 'variance' (such as improved-DDPM and guided-diffusion),
+                # We only use the 'mean' output for DPM-Solver, because DPM-Solver is based on diffusion ODEs.
+                if "out_channels" in self.config.model.__dict__.keys():
+                    if self.config.model.out_channels == 6:
+                        out = torch.split(out, 3, dim=1)[0]
+                return out
+
+            def classifier_fn(x, t, y, **classifier_kwargs):
+                logits = classifier(x, t)
+                log_probs = torch.nn.functional.log_softmax(logits, dim=-1)
+                return log_probs[range(len(logits)), y.view(-1)]
+
+            noise_schedule = NoiseScheduleVP(schedule="discrete", betas=self.betas)
+            model_fn_continuous = model_wrapper(
+                model_fn,
+                noise_schedule,
+                model_type="noise",
+                model_kwargs=model_kwargs,
+                guidance_type="uncond" if classifier is None else "classifier",
+                condition=model_kwargs["y"] if "y" in model_kwargs.keys() else None,
+                guidance_scale=classifier_scale,
+                classifier_fn=classifier_fn,
+                classifier_kwargs={},
+            )
+            rbf = RBFSolverECPMarginal(
+                model_fn_continuous,
+                noise_schedule,
+                algorithm_type="data_prediction",
+                correcting_x0_fn="dynamic_thresholding" if self.args.thresholding else None,
+                scale_dir=self.args.scale_dir,
+                log_scale_min=-3.0,
+                log_scale_max=-3.0,
+            )
+            if target is None:
+                x = rbf.sample(
+                    x,
+                    steps=(self.args.timesteps - 1 if self.args.denoise else self.args.timesteps),
+                    order=self.args.order,
+                    skip_type=self.args.skip_type,
+                    lower_order_final=self.args.lower_order_final,
+                    denoise_to_zero=self.args.denoise,
+                )
+            else:
+                x = rbf.sample_by_target_matching(
+                    x,
+                    target,
+                    steps=(self.args.timesteps - 1 if self.args.denoise else self.args.timesteps),
+                    t_start=None, t_end=None,
+                    order=self.args.order,
+                    skip_type=self.args.skip_type,
+                    lower_order_final=self.args.lower_order_final,
+                    denoise_to_zero=self.args.denoise,
+                    number=number,
+                )                        
+
         elif self.args.sample_type == "unipc_rbf":
             from samplers.uni_pc import NoiseScheduleVP, model_wrapper
             from samplers.unipc_rbf import UniPC_RBF
