@@ -54,7 +54,9 @@ names = ["rbf_ecp_marginal",
         "rbf_ecp_marginal_lagp",
         "rbf_ecp_marginal_same",
         "rbf_ecp_marginal_spd",
+        "DPM-Solver-v3",
          ]
+         
 steps = [5, 6, 8, 10, 12, 15, 20, 25, 30, 35, 40]
 
 if not os.path.isdir('fid'):
