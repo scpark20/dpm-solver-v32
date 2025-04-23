@@ -87,7 +87,7 @@ def main():
         sys.exit(f"❌ .pt 파일을 찾을 수 없습니다 → {pt_dir}")
 
     prompts_list, x_T_list, x_0_list = [], [], []
-    for i in range(100):  # 최대 100개만
+    for i in range(1000):  # 최대 1000개만
         data = torch.load(pt_files[i])
         prompts_list.append(data["text"])
         x_T_list.append(data["latent"])
