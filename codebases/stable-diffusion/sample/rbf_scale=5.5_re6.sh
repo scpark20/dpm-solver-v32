@@ -16,9 +16,9 @@ sampleMethod='rbf'
 
 for order in 3
 do
-  for steps in 8 12
+  for steps in 20
   do
-    CUDA_VISIBLE_DEVICES='6' python txt2img_latent.py --fixed_code \
+    CUDA_VISIBLE_DEVICES='0' python txt2img_latent.py --fixed_code \
       --from-file "$prompts" \
       --steps "$steps" \
       --statistics_dir "$STATS_DIR" \

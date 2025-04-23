@@ -14,7 +14,7 @@ STATS_DIR="statistics/sd-v1-4/${scale}_250_1024"
 SCALE_DIR="/data/ldm/scale${scale}_re"
 sampleMethod='rbf'
 
-for order in 2
+for order in 3
 do
   for steps in 5 10
   do

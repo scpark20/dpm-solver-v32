@@ -14,11 +14,11 @@ STATS_DIR="statistics/sd-v1-4/${scale}_250_1024"
 SCALE_DIR="/data/ldm/scale${scale}_re"
 sampleMethod='rbf'
 
-for order in 2
+for order in 3
 do
-  for steps in 20
+  for steps in 10
   do
-    CUDA_VISIBLE_DEVICES='3' python txt2img_latent.py --fixed_code \
+    CUDA_VISIBLE_DEVICES='0' python txt2img_latent.py --fixed_code \
       --from-file "$prompts" \
       --steps "$steps" \
       --statistics_dir "$STATS_DIR" \
