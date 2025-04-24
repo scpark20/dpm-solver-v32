@@ -6,24 +6,25 @@
 #       1) GPU 번호   (기본 0)
 #       2) N          (기본 128)
 #       3) M          (기본 6)
-#       4) OFFSET     (기본 0)
-#       5) K          (기본 20)
-#       6) SCALE      (기본 5.5)
+#       4) K          (기본 20)
+#       5) SCALE      (기본 5.5)
 # ─────────────────────────────────────────────
 set -e
 
 CUDA=${1:-0}
 N=${2:-1024}
 M=${3:-6}
-OFFSET=${4:-0}
-K=${5:-16}
-SCALE=${6:-5.5}
+K=${4:-16}
+SCALE=${5:-7.5}
 
 export CUDA_VISIBLE_DEVICES="$CUDA"
 
+# OFFSET을 인자로 받지 않고 K * CUDA로 자동 계산
+OFFSET=$(( K * CUDA ))
+
 # 실험할 파라미터 목록
 NFE_ARR=(5 6 8 10 12 15 20)
-ORDER_ARR=(2 3)
+ORDER_ARR=(4)
 
 for ORDER in "${ORDER_ARR[@]}"; do
   for NFE in "${NFE_ARR[@]}"; do

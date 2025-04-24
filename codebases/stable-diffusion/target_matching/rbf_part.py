@@ -40,7 +40,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--offset", type=int,   default=0,   help="파일 번호 오프셋")
     p.add_argument("--K",      type=int,   default=20,  help="반복 루프 횟수")
     p.add_argument("--scale",  type=float, default=5.5, help="CFG 스케일")
-    p.add_argument("--order",  type=int,   default=2,   choices=[1,2,3],
+    p.add_argument("--order",  type=int,   default=2,   choices=[1,2,3,4,5,6,7],
                    help="RBF 차수 (order)")
     p.add_argument("--nfe",    type=int,   default=5,
                    help="function evaluations (NFE)")
