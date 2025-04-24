@@ -386,8 +386,8 @@ class RBFSolverECPMarginal:
             thresholding_max_val=1.,
             dynamic_thresholding_ratio=0.995,
             scale_dir=None,
-            log_scale_min=-3.0,
-            log_scale_max=3.0,
+            log_scale_min=-2.0,
+            log_scale_max=2.0,
             log_scale_num=33
     ):
         self.model = lambda x, t: model_fn(x, t.expand((x.shape[0])))
