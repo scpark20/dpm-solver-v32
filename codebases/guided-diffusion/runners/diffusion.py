@@ -193,6 +193,7 @@ class Diffusion(object):
 
     def sample_raw(self):
         self.sample_raw_flag = True
+        print('self.sample_raw_flag :', self.sample_raw_flag)
         self.sample()
 
     def sample(self):
@@ -322,11 +323,14 @@ class Diffusion(object):
                     config.data.image_size,
                     device=self.device,
                 )
-                x, classes = self.sample_image(noise, model, classifier=classifier)
+                
+                x, classes = self.sample_image(noise, model, classifier=classifier, return_hist=self.sample_raw_flag)
                 if self.sample_raw_flag:
+                    x, hist = x
                     path = os.path.join(self.args.image_folder, f"samples_{r}.npz")
                     np.savez_compressed(path,
                                         noises_raw=noise.cpu(),
+                                        hist_raw=hist.cpu(),
                                         datas_raw=x.cpu(),
                                         classes=classes.cpu() if classes is not None else 0)
                 else:
@@ -339,7 +343,7 @@ class Diffusion(object):
                         tvu.save_image(x.cpu()[i], path)
                         img_id += 1
 
-    def sample_image(self, x, model, last=True, classifier=None, base_samples=None, classes=None, target=None, number=None):
+    def sample_image(self, x, model, last=True, classifier=None, base_samples=None, classes=None, target=None, number=None, return_hist=False):
         assert last
         try:
             skip = self.args.skip
@@ -507,6 +511,7 @@ class Diffusion(object):
                 skip_type=self.args.skip_type,
                 lower_order_final=self.args.lower_order_final,
                 denoise_to_zero=self.args.denoise,
+                return_intermediate=return_hist
             )
 
         elif self.args.sample_type == "rbf_ecp":
@@ -1135,49 +1140,7 @@ class Diffusion(object):
                 denoise_to_zero=self.args.denoise,
             )    
 
-        elif self.args.sample_type == "unipc":
-            from samplers.uni_pc import NoiseScheduleVP, model_wrapper, UniPC
-
-            def model_fn(x, t, **model_kwargs):
-                out = model(x, t, **model_kwargs)
-                # If the model outputs both 'mean' and 'variance' (such as improved-DDPM and guided-diffusion),
-                # We only use the 'mean' output for DPM-Solver, because DPM-Solver is based on diffusion ODEs.
-                if "out_channels" in self.config.model.__dict__.keys():
-                    if self.config.model.out_channels == 6:
-                        out = torch.split(out, 3, dim=1)[0]
-                return out
-
-            def classifier_fn(x, t, y, **classifier_kwargs):
-                logits = classifier(x, t)
-                log_probs = torch.nn.functional.log_softmax(logits, dim=-1)
-                return log_probs[range(len(logits)), y.view(-1)]
-
-            noise_schedule = NoiseScheduleVP(schedule="discrete", betas=self.betas)
-            model_fn_continuous = model_wrapper(
-                model_fn,
-                noise_schedule,
-                model_type="noise",
-                model_kwargs=model_kwargs,
-                guidance_type="uncond" if classifier is None else "classifier",
-                condition=model_kwargs["y"] if "y" in model_kwargs.keys() else None,
-                guidance_scale=classifier_scale,
-                classifier_fn=classifier_fn,
-                classifier_kwargs={},
-            )
-            unipc = UniPC(
-                model_fn_continuous,
-                noise_schedule,
-                algorithm_type="data_prediction",
-                correcting_x0_fn="dynamic_thresholding" if self.args.thresholding else None,
-            )
-            x = unipc.sample(
-                x,
-                steps=(self.args.timesteps - 1 if self.args.denoise else self.args.timesteps),
-                order=self.args.order,
-                skip_type=self.args.skip_type,
-                lower_order_final=self.args.lower_order_final,
-                denoise_to_zero=self.args.denoise,
-            )    
+        
         elif self.args.sample_type == "dpmsolver_v3":
             from samplers.dpm_solver_v3 import model_wrapper
 

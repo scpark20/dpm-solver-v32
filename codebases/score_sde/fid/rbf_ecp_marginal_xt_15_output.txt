@@ -1,0 +1,3 @@
+name : rbf_ecp_marginal_xt
+step : 15
+FID  : 3.5409774780273438

@@ -47,6 +47,7 @@ flags.DEFINE_string("statistics_dir", None, "Statistics path for DPM-Solver-v3."
 flags.DEFINE_string("eval_folder", "/data/score_sde_outputs/", "The folder name for storing evaluation results")
 flags.DEFINE_string("sample_folder", "sample", "The folder name for storing samples")
 flags.DEFINE_bool("return_prior", False, "Return prior from sampling function.")
+flags.DEFINE_bool("return_hist", False, "Return hist from sampling function.")
 flags.mark_flags_as_required(["ckp_path", "config"])
 
 
@@ -69,10 +70,10 @@ def get_data_inverse_scaler(config):
 
 
 def main(argv):
-    sample(FLAGS.config, FLAGS.ckp_path, FLAGS.statistics_dir, FLAGS.eval_folder, FLAGS.sample_folder, FLAGS.return_prior, FLAGS.scale_dir)
+    sample(FLAGS.config, FLAGS.ckp_path, FLAGS.statistics_dir, FLAGS.eval_folder, FLAGS.sample_folder, FLAGS.return_prior, FLAGS.scale_dir, FLAGS.return_hist)
 
 
-def sample(config, ckp_path, statistics_dir, eval_folder="samples", sample_dir="sample", return_prior=False, scale_dir=None):
+def sample(config, ckp_path, statistics_dir, eval_folder="samples", sample_dir="sample", return_prior=False, scale_dir=None, return_hist=False):
     # Fix the seed for z = sde.prior_sampling(shape).to(device) in deterministic sampling
     torch.manual_seed(config.seed)
     eval_dir = os.path.join(eval_folder, ckp_path.split("/")[-1].split(".")[-2])
@@ -131,17 +132,19 @@ def sample(config, ckp_path, statistics_dir, eval_folder="samples", sample_dir="
 
         sampling_fn = dpm_solver_v3_sampler
     else:
-        sampling_fn = sampling.get_sampling_fn(config, sde, sampling_shape, inverse_scaler, return_prior=return_prior, scale_dir=scale_dir)
+        sampling_fn = sampling.get_sampling_fn(config, sde, sampling_shape, inverse_scaler, return_prior=return_prior, scale_dir=scale_dir, return_hist=return_hist)
         sampling_fn = functools.partial(sampling_fn, score_model)
 
     this_sample_dir = os.path.join(eval_dir, sample_dir)
     os.makedirs(this_sample_dir, exist_ok=True)
     logging.info(this_sample_dir)
     num_sampling_rounds = config.eval.num_samples // config.eval.batch_size + 1
-    for r in range(1):
+    for r in range(16):
         ret = sampling_fn()
         if len(ret) == 2:
             samples_raw, n = ret
+        if len(ret) == 4:
+            samples_raw, timesteps, hist, n = ret
         elif len(ret) == 6:
             samples_raw, n, prior, target, hist, xt = ret
         logging.info("sampling -- round: %d (NFE %d)" % (r, n))
@@ -150,6 +153,12 @@ def sample(config, ckp_path, statistics_dir, eval_folder="samples", sample_dir="
         if len(ret) == 2:
             np.savez_compressed(os.path.join(this_sample_dir, f"samples_{r}.npz"),
                                 samples=samples,
+                                samples_raw=samples_raw.cpu())
+        elif len(ret) == 4:
+            np.savez_compressed(os.path.join(this_sample_dir, f"samples_{r}.npz"),
+                                samples=samples,
+                                timesteps=timesteps.cpu(),
+                                hist=hist.cpu(),
                                 samples_raw=samples_raw.cpu())
         elif len(ret) == 6:
             np.savez_compressed(os.path.join(this_sample_dir, f"samples_{r}.npz"),

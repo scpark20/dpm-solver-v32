@@ -1,0 +1,3 @@
+name : lagrange
+step : 12
+FID  : 3.8915212154388428

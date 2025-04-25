@@ -1,6 +1,6 @@
 CKPT_PATH="/data/checkpoints/cifar10_ddpmpp_deep_continuous/checkpoint_8.pth"
 CONFIG="configs/vp/cifar10_ddpmpp_deep_continuous.py"
-for steps in 30; do
+for steps in 200; do
 
 if [ $steps -le 10 ]; then
     EPS="1e-3"
@@ -27,6 +27,5 @@ else
     lower_order_final="True"
     use_corrector="True"
 fi
-
-python sample.py --config=$CONFIG --ckp_path=$CKPT_PATH --sample_folder="lagrange_"$steps --config.sampling.method=lagrange --config.sampling.steps=$steps --config.sampling.eps=$EPS
+python sample_test.py --config=$CONFIG --return_hist=True --ckp_path=$CKPT_PATH --sample_folder="UniPC_bh1_"$steps --config.sampling.method=uni_pc --config.sampling.steps=$steps --config.sampling.variant=bh1 --config.sampling.eps=$EPS
 done

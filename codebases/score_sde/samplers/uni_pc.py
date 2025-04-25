@@ -69,9 +69,11 @@ class UniPC:
         Convert the model to the noise prediction model or the data prediction model.
         """
         if self.predict_x0:
-            return self.data_prediction_fn(x, t)
+            y = self.data_prediction_fn(x, t)
         else:
-            return self.noise_prediction_fn(x, t)
+            y = self.noise_prediction_fn(x, t)
+        self.model_hist.append(y)
+        return y
 
     def get_time_steps(self, skip_type, t_T, t_0, N, device):
         """Compute the intermediate time steps for sampling."""
@@ -392,6 +394,7 @@ class UniPC:
         rtol=0.05,
         return_intermediate=False,
     ):
+        self.model_hist = []    
         """
         Compute the sample at time `t_end` by UniPC, given the initial `x` at time `t_start`.
         """
@@ -482,7 +485,29 @@ class UniPC:
                     x = self.correcting_xt_fn(x, t, step + 1)
                 if return_intermediate:
                     intermediates.append(x)
+
+        timesteps = self.get_time_steps(skip_type=skip_type, t_T=t_T, t_0=t_0, N=steps, device='cpu')
+        signal_rates = torch.tensor([self.noise_schedule.marginal_alpha(t) for t in timesteps])
+        noise_rates = torch.tensor([self.noise_schedule.marginal_std(t) for t in timesteps])
+
+        noise = intermediates[0]
+        image = intermediates[-1]
+        targets = []
+        for alpha, sigma in zip(signal_rates, noise_rates):
+            target_traj = alpha*image + sigma*noise
+            targets.append(target_traj)
+
+        # (NFE+1, bchw)
+        targets = torch.stack(targets)
+        # (NFE+1, bchw)
+        intermediates = torch.stack(intermediates)
+        # (NFE, bchw)
+        model_hist = torch.stack(self.model_hist)
+        model_hist = torch.cat([model_hist, torch.zeros_like(model_hist[:1])], dim=0)
+        # (3, NFE+1, bchw)
+        intermediates = torch.stack([targets, intermediates, model_hist])
+        timesteps = torch.stack([timesteps, signal_rates, noise_rates], dim=0)
         if return_intermediate:
-            return x, intermediates
+            return x, timesteps, intermediates
         else:
             return x

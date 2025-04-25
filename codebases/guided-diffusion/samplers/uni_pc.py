@@ -12,6 +12,7 @@ class NoiseScheduleVP:
         continuous_beta_0=0.1,
         continuous_beta_1=20.0,
     ):
+        self.model_hist = []
         """Create a wrapper class for the forward SDE (VP type).
 
         ***
@@ -487,7 +488,7 @@ class UniPC:
 
         We support both data_prediction and noise_prediction.
         """
-
+    
         self.model = lambda x, t: model_fn(x, t.expand((x.shape[0])))
         self.noise_schedule = noise_schedule
         assert algorithm_type in ["data_prediction", "noise_prediction"]
@@ -539,9 +540,11 @@ class UniPC:
         Convert the model to the noise prediction model or the data prediction model.
         """
         if self.predict_x0:
-            return self.data_prediction_fn(x, t)
+            y = self.data_prediction_fn(x, t)
         else:
-            return self.noise_prediction_fn(x, t)
+            y = self.noise_prediction_fn(x, t)
+        self.model_hist.append(y)
+        return y
 
     def get_time_steps(self, skip_type, t_T, t_0, N, device):
         """Compute the intermediate time steps for sampling."""
@@ -862,6 +865,8 @@ class UniPC:
         rtol=0.05,
         return_intermediate=False,
     ):
+        self.model_hist = []
+
         """
         Compute the sample at time `t_end` by UniPC, given the initial `x` at time `t_start`.
         """
@@ -870,6 +875,14 @@ class UniPC:
         assert (
             t_0 > 0 and t_T > 0
         ), "Time range needs to be greater than 0. For discrete-time DPMs, it needs to be in [1 / N, 1], where N is the length of betas array"
+
+        # 실제로 사용할 time step array를 구한다.
+        # timesteps는 길이가 steps+1인 1-D 텐서: [t_T, ..., t_0]
+        timesteps = self.get_time_steps(skip_type=skip_type, t_T=t_T, t_0=t_0, N=steps, device='cpu')
+        lambdas = torch.tensor([self.noise_schedule.marginal_lambda(t) for t in timesteps])
+        signal_rates = torch.tensor([self.noise_schedule.marginal_alpha(t) for t in timesteps])
+        noise_rates = torch.tensor([self.noise_schedule.marginal_std(t) for t in timesteps])
+        
         if return_intermediate:
             assert method in [
                 "multistep",
@@ -884,6 +897,7 @@ class UniPC:
             ], "Cannot use adaptive solver when correcting_xt_fn is not None"
         device = x.device
         intermediates = []
+        
         with torch.no_grad():
             if method == "multistep":
                 assert steps >= order
@@ -894,6 +908,7 @@ class UniPC:
                 t = timesteps[step]
                 t_prev_list = [t]
                 model_prev_list = [self.model_fn(x, t)]
+                
                 if self.correcting_xt_fn is not None:
                     x = self.correcting_xt_fn(x, t, step)
                 if return_intermediate:
@@ -907,6 +922,7 @@ class UniPC:
                     )
                     if model_x is None:
                         model_x = self.model_fn(x, t)
+                    
                     if self.correcting_xt_fn is not None:
                         x = self.correcting_xt_fn(x, t, step)
                     if return_intermediate:
@@ -922,13 +938,14 @@ class UniPC:
                     else:
                         step_order = order
                     if step == steps:
-                        #print("do not run corrector at the last step")
+                        print("do not run corrector at the last step")
                         use_corrector = False
                     else:
                         use_corrector = True
                     x, model_x = self.multistep_uni_pc_update(
                         x, model_prev_list, t_prev_list, t, step_order, use_corrector=use_corrector
                     )
+                    
                     if self.correcting_xt_fn is not None:
                         x = self.correcting_xt_fn(x, t, step)
                     if return_intermediate:
@@ -952,10 +969,25 @@ class UniPC:
                     x = self.correcting_xt_fn(x, t, step + 1)
                 if return_intermediate:
                     intermediates.append(x)
+
+        
         if return_intermediate:
+            noise = intermediates[0]
+            image = intermediates[-1]
+            targets = []
+            for alpha, sigma in zip(signal_rates, noise_rates):
+                target_traj = alpha*image + sigma*noise
+                targets.append(target_traj)
+
+            targets = torch.stack(targets)
+            intermediates = torch.stack(intermediates)
+            model_hist = torch.stack(self.model_hist)
+            model_hist = torch.cat([model_hist, torch.zeros_like(model_hist[:1])], dim=0)
+            intermediates = torch.stack([targets, intermediates, model_hist])
             return x, intermediates
         else:
             return x
+
 
 
 #############################################################

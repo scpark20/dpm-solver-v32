@@ -46,15 +46,7 @@ def compute_fid(path):
     fid = tfgan.eval.frechet_classifier_distance_from_activations(data_pools, all_pools)
     return fid
 
-names = ["rbf_ecp_marginal",
-        "rbf_ecp_marginal4",
-        "rbf_ecp_marginal5",
-        "rbf_ecp_marginal6",
-        "rbf_ecp_marginal_lagc",
-        "rbf_ecp_marginal_lagp",
-        "rbf_ecp_marginal_same",
-        "rbf_ecp_marginal_spd",
-        "DPM-Solver-v3",
+names = ["rbf_ecp_marginal_xt"
          ]
          
 steps = [5, 6, 8, 10, 12, 15, 20, 25, 30, 35, 40]
@@ -70,6 +62,7 @@ for name in names:
         filename = os.path.join('fid', filename)
         if os.path.exists(filename):
             continue
+        #path = f"/data/score_sde/outputs/checkpoint_8/{name}_{step}"
         path = f"/data/score_sde_outputs/checkpoint_8/{name}_{step}"
         if not os.path.exists(path):
             continue
