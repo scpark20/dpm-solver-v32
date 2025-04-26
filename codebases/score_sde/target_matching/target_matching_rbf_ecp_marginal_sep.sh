@@ -1,8 +1,8 @@
 CKPT_PATH="/data/checkpoints/cifar10_ddpmpp_deep_continuous/checkpoint_8.pth"
 CONFIG="configs/vp/cifar10_ddpmpp_deep_continuous.py"
-METHOD="rbf_ecp_marginal_xt"
-SCALE_DIR="/data/score_sde/scale/"${METHOD}
-for steps in 35; do
+SCALE_DIR="/data/score_sde/scale/rbf_ecp_marginal_sep"
+PAIR_NPZ='/data/score_sde/outputs/checkpoint_8/euler_1000/samples_0.npz'
+for steps in 5 10 15 20 25 30 35 40; do
 
 if [ $steps -le 10 ]; then
     EPS="1e-3"
@@ -30,5 +30,5 @@ else
     use_corrector="True"
 fi
 
-CUDA_VISIBLE_DEVICES='0' python sample.py --config=$CONFIG --ckp_path=$CKPT_PATH --scale_dir=$SCALE_DIR --sample_folder=${METHOD}"_"$steps --config.sampling.method=${METHOD} --config.sampling.steps=$steps --config.sampling.eps=$EPS
+python target_matching.py --config=$CONFIG --pair_npz=$PAIR_NPZ --scale_dir=$SCALE_DIR --ckp_path=$CKPT_PATH --config.sampling.method=rbf_ecp_marginal_sep --config.sampling.steps=$steps --config.sampling.eps=$EPS
 done
