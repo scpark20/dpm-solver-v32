@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 
 
 N = 128
