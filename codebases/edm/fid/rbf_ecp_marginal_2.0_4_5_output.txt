@@ -1,0 +1,3 @@
+name : rbf_ecp_marginal_2.0_4
+step : 5
+FID  : 14.906105041503906

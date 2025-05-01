@@ -44,7 +44,7 @@ config_flags.DEFINE_config_file("config", None, "Training configuration.", lock_
 flags.DEFINE_string("ckp_path", None, "Checkpoint path.")
 flags.DEFINE_string("scale_dir", None, "dir to save scale")
 flags.DEFINE_string("statistics_dir", None, "Statistics path for DPM-Solver-v3.")
-flags.DEFINE_string("eval_folder", "/data/score_sde_outputs/", "The folder name for storing evaluation results")
+flags.DEFINE_string("eval_folder", "/data/score_sde/outputs/", "The folder name for storing evaluation results")
 flags.DEFINE_string("sample_folder", "sample", "The folder name for storing samples")
 flags.DEFINE_bool("return_prior", False, "Return prior from sampling function.")
 flags.mark_flags_as_required(["ckp_path", "config"])
