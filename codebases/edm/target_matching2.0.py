@@ -66,9 +66,8 @@ sampling_fn = rbf_sampler
 
 import torch.nn.functional as F
 
-#for steps in [5, 6, 8, 10, 12, 15, 20, 25, 30, 35, 40]:
-for steps in [5, 6]:
-    #for order in [3, 4]:
+for steps in [5, 6, 8, 10, 12, 15, 20, 25, 30, 35, 40]:
+#for steps in [5, 6]:
     for order in [4]:
         for number in range(K):
             indexes = np.random.randint(0, len(noises), size=(M,))

@@ -48,8 +48,7 @@ def compute_fid(path):
 
 #names = ['dpm_solver++', "uni_pc_bh1", 'dpm_solver_v3', 'rbf_ecp_marginal_2.0_3', 'rbf_ecp_marginal_2.0_4', 'rbf_ecp_marginal_3.0_3', 'rbf_ecp_marginal_2.0_4']
 names = ['rbf_ecp_marginal_2.0_4']
-#steps = [5, 6, 8, 10, 12, 15, 20, 25, 30, 35, 40]
-steps = [5, 6]
+steps = [5, 6, 8, 10, 12, 15, 20, 25, 30, 35, 40]
 if not os.path.isdir('fid'):
     os.makedirs('fid')
 for step in steps:    

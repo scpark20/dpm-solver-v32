@@ -33,10 +33,10 @@ sampler = DCSampler(model)
 print('done')
 
 N = 10
-M = 5
-K = 20
+M = 10
+K = 1
 #for SCALE in [1.5, 3.5, 5.5, 7.5, 9.5]:
-for SCALE in [1.5]:
+for SCALE in [1.5, 3.5, 5.5, 7.5, 9.5]:
     os.makedirs(f'/data/ldm/dc{SCALE}', exist_ok=True)
 
     import numpy as np
@@ -60,11 +60,11 @@ for SCALE in [1.5]:
     from contextlib import nullcontext
 
     for ORDER in [3]:
-        for NFE in [5, 6, 8, 10, 12, 15, 20, 25, 30, 35, 40]:
+        for NFE in [5, 6, 8, 10, 12, 15, 20]:
             for number in range(K):
                 index = np.random.randint(0, N, size=(M,))
                 prompts = list(prompts_list[index])
-                traj = traj_list[index].to(device)
+                traj = traj_list[:, index].to(device)
                 print(prompts)
                 precision_scope = autocast if opt.precision == "autocast" else nullcontext
                 with precision_scope("cuda"):
