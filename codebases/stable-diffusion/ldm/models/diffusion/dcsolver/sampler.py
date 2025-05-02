@@ -88,7 +88,7 @@ class DCSampler(object):
 
         dcsolver = DCSolver(model_fn, ns, dc_dir=dc_dir)
         x = dcsolver.sample(
-            img, steps=S, skip_type="time_uniform", method="data_prediction", order=order, lower_order_final=True
+            img, steps=S, skip_type="time_uniform", method="multistep", order=order, lower_order_final=True
         )
 
         return x.to(device), None

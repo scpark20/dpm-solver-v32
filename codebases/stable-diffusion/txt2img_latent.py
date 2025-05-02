@@ -24,6 +24,7 @@ from ldm.models.diffusion.uni_pc import UniPCSampler
 from ldm.models.diffusion.uni_pc import UniPCbh1Sampler
 from ldm.models.diffusion.uni_pc import UniPCbh2Sampler
 from ldm.models.diffusion.dpm_solver_v3 import DPMSolverv3Sampler
+from ldm.models.diffusion.dcsolver import DCSampler
 
 
 def chunk(it, size):
@@ -92,7 +93,7 @@ def get_parser():
         default=50,
         help="number of sampling steps",
     )
-    parser.add_argument("--method", default="ddim", choices=["ddim", "plms", "dpm_solver++", "uni_pc", "uni_pc_bh1", "uni_pc_bh2", "dpm_solver_v3", "rbf", 'rbf_euler'])
+    parser.add_argument("--method", default="ddim", choices=["ddim", "plms", "dpm_solver++", "uni_pc", "uni_pc_bh1", "uni_pc_bh2", "dpm_solver_v3", "rbf", 'rbf_euler', 'dcsolver'])
     parser.add_argument(
         "--fixed_code",
         action="store_true",
@@ -147,6 +148,7 @@ def get_parser():
     )
     parser.add_argument("--statistics_dir", type=str, default=None, help="Statistics path for DPM-Solver-v3.")
     parser.add_argument("--scale_dir", type=str, default=None, help="Scale dir for scale parameters")
+    parser.add_argument("--dc_dir", type=str, default=None, help="DC dir for dc parameters")
     parser.add_argument(
         "--config",
         type=str,
@@ -201,7 +203,8 @@ def main():
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     model = model.to(device)
     samplers = {"ddim": DDIMSampler, "plms": PLMSSampler, "dpm_solver++": DPMSolverSampler, "uni_pc": UniPCSampler,
-                "uni_pc_bh1": UniPCbh1Sampler, "uni_pc_bh2": UniPCbh2Sampler, "rbf": RBFSampler, 'rbf_euler': RBFEulerSampler
+                "uni_pc_bh1": UniPCbh1Sampler, "uni_pc_bh2": UniPCbh2Sampler, "rbf": RBFSampler, 'rbf_euler': RBFEulerSampler,
+                'dcsolver': DCSampler
                 }
 
     if opt.method in samplers.keys():
@@ -275,6 +278,20 @@ def main():
                             order=opt.order,
                             scale_dir=opt.scale_dir,
                         )
+                    elif opt.method == "dcsolver":
+                        samples, _ = sampler.sample(
+                            S=opt.steps,
+                            conditioning=c,
+                            batch_size=opt.n_samples,
+                            shape=shape,
+                            verbose=False,
+                            unconditional_guidance_scale=opt.scale,
+                            unconditional_conditioning=uc,
+                            eta=opt.ddim_eta,
+                            x_T=start_code,
+                            order=opt.order,
+                            dc_dir=opt.dc_dir,
+                        )    
                     else:
                         samples, _ = sampler.sample(
                             S=opt.steps,

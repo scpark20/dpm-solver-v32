@@ -92,7 +92,7 @@ def get_parser():
         default=50,
         help="number of sampling steps",
     )
-    parser.add_argument("--method", default="ddim", choices=["ddim", "plms", "dpm_solver++", "uni_pc", "uni_pc_bh1", "uni_pc_bh2", "dpm_solver_v3", "rbf", 'rbf_euler'])
+    parser.add_argument("--method", default="ddim", choices=["ddim", "plms", "dpm_solver++", "uni_pc", "uni_pc_bh1", "uni_pc_bh2", "dpm_solver_v3", "rbf", 'rbf_euler', 'dcsolver'])
     parser.add_argument(
         "--fixed_code",
         action="store_true",
