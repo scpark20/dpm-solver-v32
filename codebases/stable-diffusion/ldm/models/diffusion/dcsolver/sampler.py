@@ -2,10 +2,9 @@
 
 import torch
 
-from .dpm_solver import NoiseScheduleVP, model_wrapper, DPM_Solver
+from .dcsolver import NoiseScheduleVP, model_wrapper, DCSolver
 
-
-class DPMSolverSampler(object):
+class DCSampler(object):
     def __init__(self, model, **kwargs):
         super().__init__()
         self.model = model
@@ -38,10 +37,11 @@ class DPMSolverSampler(object):
         corrector_kwargs=None,
         verbose=True,
         x_T=None,
+        order=2,
+        dc_dir=None,
         log_every_t=100,
         unconditional_guidance_scale=1.0,
         unconditional_conditioning=None,
-        return_intermediate=False,
         # this has to come in the same format as the conditioning, # e.g. as encoded tokens, ...
         **kwargs,
     ):
@@ -57,8 +57,6 @@ class DPMSolverSampler(object):
         # sampling
         C, H, W = shape
         size = (batch_size, C, H, W)
-
-        # print(f'Data shape for DPM-Solver sampling is {size}, sampling steps {S}')
 
         device = self.model.betas.device
         if x_T is None:
@@ -88,14 +86,78 @@ class DPMSolverSampler(object):
             )
             ORDER = 2
 
-        dpm_solver = DPM_Solver(model_fn, ns, predict_x0=True, thresholding=False)
-        if return_intermediate:
-            x, traj, timesteps = dpm_solver.sample(
-            img, steps=S, skip_type="time_uniform", method="multistep", order=ORDER, lower_order_final=True, return_intermediate=True
+        dcsolver = DCSolver(model_fn, ns, dc_dir=dc_dir)
+        x = dcsolver.sample(
+            img, steps=S, skip_type="time_uniform", method="data_prediction", order=order, lower_order_final=True
+        )
+
+        return x.to(device), None
+    
+    @torch.no_grad()
+    def target_matching(
+        self,
+        target,
+        S,
+        batch_size,
+        shape,
+        conditioning=None,
+        callback=None,
+        normals_sequence=None,
+        img_callback=None,
+        quantize_x0=False,
+        eta=0.0,
+        mask=None,
+        x0=None,
+        temperature=1.0,
+        noise_dropout=0.0,
+        score_corrector=None,
+        corrector_kwargs=None,
+        verbose=True,
+        order=2,
+        dc_dir=None,
+        log_every_t=100,
+        unconditional_guidance_scale=1.0,
+        unconditional_conditioning=None,
+        # this has to come in the same format as the conditioning, # e.g. as encoded tokens, ...
+        **kwargs,
+    ):
+        if conditioning is not None:
+            if isinstance(conditioning, dict):
+                cbs = conditioning[list(conditioning.keys())[0]].shape[0]
+                if cbs != batch_size:
+                    print(f"Warning: Got {cbs} conditionings but batch-size is {batch_size}")
+            else:
+                if conditioning.shape[0] != batch_size:
+                    print(f"Warning: Got {conditioning.shape[0]} conditionings but batch-size is {batch_size}")
+
+        device = self.model.betas.device
+        
+        ns = NoiseScheduleVP("discrete", alphas_cumprod=self.alphas_cumprod)
+
+        if conditioning is None:
+            model_fn = model_wrapper(
+                lambda x, t, c: self.model.apply_model(x, t, c),
+                ns,
+                model_type="noise",
+                guidance_type="uncond",
             )
-            return x.to(device), traj, timesteps, None
-        else:                
-            x = dpm_solver.sample(
-                img, steps=S, skip_type="time_uniform", method="multistep", order=ORDER, lower_order_final=True
+            ORDER = 3
+        else:
+            model_fn = model_wrapper(
+                lambda x, t, c: self.model.apply_model(x, t, c),
+                ns,
+                model_type="noise",
+                guidance_type="classifier-free",
+                condition=conditioning,
+                unconditional_condition=unconditional_conditioning,
+                guidance_scale=unconditional_guidance_scale,
             )
-            return x.to(device), None
+            ORDER = 2
+
+        dcsolver = DCSolver(model_fn, ns, dc_dir=dc_dir)
+        dcsolver.ref_ts = target[1]
+        dcsolver.ref_xs = target[0]
+        x = dcsolver.search_dc(
+            None, steps=S, skip_type="time_uniform", method="multistep", order=order, lower_order_final=True)
+
+        return x.to(device), None
