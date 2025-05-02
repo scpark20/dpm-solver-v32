@@ -32,9 +32,10 @@ from ldm.models.diffusion.dcsolver import DCSampler
 sampler = DCSampler(model)
 print('done')
 
-N = 1
-#for SCALE in [1.5, 3.5, 5.5, 9.5]:
-#for SCALE in [3.5, 5.5, 9.5]:
+N = 10
+M = 5
+K = 20
+#for SCALE in [1.5, 3.5, 5.5, 7.5, 9.5]:
 for SCALE in [1.5]:
     os.makedirs(f'/data/ldm/dc{SCALE}', exist_ok=True)
 
@@ -59,26 +60,30 @@ for SCALE in [1.5]:
     from contextlib import nullcontext
 
     for ORDER in [3]:
-        for NFE in [5, 6, 8, 10]:
-            prompts = list(prompts_list)
-            print(prompts)
-            precision_scope = autocast if opt.precision == "autocast" else nullcontext
-            with precision_scope("cuda"):
-                with model.ema_scope():
-                    uc = None
-                    if opt.scale != 1.0:
-                        uc = model.get_learned_conditioning(len(prompts) * [""])
-                    c = model.get_learned_conditioning(prompts)
-                    samples, _ = sampler.target_matching(
-                        (traj_list.to(device), timesteps),
-                        S=NFE,
-                        shape=(4, 64, 64),
-                        conditioning=c,
-                        batch_size=len(prompts),
-                        verbose=False,
-                        unconditional_guidance_scale=SCALE,
-                        unconditional_conditioning=uc,
-                        eta=0,
-                        order=ORDER,
-                        dc_dir=f'/data/ldm/dc{SCALE}'
-                    )
+        for NFE in [5, 6, 8, 10, 12, 15, 20, 25, 30, 35, 40]:
+            for number in range(K):
+                index = np.random.randint(0, N, size=(M,))
+                prompts = list(prompts_list[index])
+                traj = traj_list[index].to(device)
+                print(prompts)
+                precision_scope = autocast if opt.precision == "autocast" else nullcontext
+                with precision_scope("cuda"):
+                    with model.ema_scope():
+                        uc = None
+                        if opt.scale != 1.0:
+                            uc = model.get_learned_conditioning(len(prompts) * [""])
+                        c = model.get_learned_conditioning(prompts)
+                        samples, _ = sampler.target_matching(
+                            (traj.to(device), timesteps),
+                            S=NFE,
+                            shape=(4, 64, 64),
+                            conditioning=c,
+                            batch_size=len(prompts),
+                            verbose=False,
+                            unconditional_guidance_scale=SCALE,
+                            unconditional_conditioning=uc,
+                            eta=0,
+                            order=ORDER,
+                            number=number,
+                            dc_dir=f'/data/ldm/dc{SCALE}'
+                        )

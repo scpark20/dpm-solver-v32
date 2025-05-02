@@ -114,6 +114,7 @@ class DCSampler(object):
         corrector_kwargs=None,
         verbose=True,
         order=2,
+        number=0,
         dc_dir=None,
         log_every_t=100,
         unconditional_guidance_scale=1.0,
@@ -158,6 +159,6 @@ class DCSampler(object):
         dcsolver.ref_ts = target[1]
         dcsolver.ref_xs = target[0]
         x = dcsolver.search_dc(
-            None, steps=S, skip_type="time_uniform", method="multistep", order=order, lower_order_final=True)
+            None, steps=S, skip_type="time_uniform", method="multistep", order=order, lower_order_final=True, number=number)
 
         return x.to(device), None

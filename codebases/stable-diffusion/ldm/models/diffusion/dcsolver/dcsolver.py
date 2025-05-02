@@ -679,7 +679,7 @@ class DCSolver:
 
     def search_dc(self, x, steps=20, t_start=None, t_end=None, order=3, skip_type='time_uniform',
         method='singlestep', lower_order_final=True, denoise_to_zero=False, solver_type='dpm_solver',
-        atol=0.0078, rtol=0.05, corrector=False, dc_ratio_initial=1.0,
+        atol=0.0078, rtol=0.05, corrector=False, dc_ratio_initial=1.0, number=0,
     ):
         if x is None:
             x = self.ref_xs[0]
@@ -757,7 +757,7 @@ class DCSolver:
 
         if self.dc_dir is not None:
             import os
-            save_file = os.path.join(self.dc_dir, f'NFE={steps},p={order}.npz')
+            save_file = os.path.join(self.dc_dir, f'NFE={steps},p={order},number={number}.npz')
             np.savez(save_file,
                      dc_ratios=dc_ratios)
             print(save_file, ' saved!')
