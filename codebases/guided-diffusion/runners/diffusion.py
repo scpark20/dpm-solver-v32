@@ -617,6 +617,7 @@ class Diffusion(object):
                     skip_type=self.args.skip_type,
                     lower_order_final=self.args.lower_order_final,
                     denoise_to_zero=self.args.denoise,
+                    method='multistep'
                 )
             else:
                 dcsolver.ref_xs = target[0]
@@ -629,6 +630,7 @@ class Diffusion(object):
                     skip_type=self.args.skip_type,
                     lower_order_final=self.args.lower_order_final,
                     denoise_to_zero=self.args.denoise,
+                    method='multistep'
                 )
 
         elif self.args.sample_type == "rbf_ecp_marginal":
