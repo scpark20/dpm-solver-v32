@@ -1,5 +1,5 @@
-#DEVICES="0,1,2,3,4,5,6,7"
-DEVICES="0"
+DEVICES="0,1,2,3,4,5,6,7"
+#DEVICES="0"
 CONFIG="imagenet256_guided.yml"
 
 for scale in 2.0 4.0 6.0 8.0; do
