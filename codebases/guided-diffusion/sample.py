@@ -48,6 +48,12 @@ def parse_args_and_config():
         help="scale dir to load",
     )
     parser.add_argument(
+        "--dc_dir",
+        type=str,
+        default=None,
+        help="dc dir to load",
+    )
+    parser.add_argument(
         "--variant",
         type=str,
         default='bh2',
