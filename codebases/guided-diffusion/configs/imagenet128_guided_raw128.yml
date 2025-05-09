@@ -62,7 +62,7 @@ sampling:
     batch_size: 16
     last_only: True
     fid_stats_dir: "/data/checkpoints/VIRTUAL_imagenet128_labeled.npz"
-    fid_total_samples: 256
+    fid_total_samples: 128
     fid_batch_size: 16
     cond_class: true
     classifier_scale: 1.25

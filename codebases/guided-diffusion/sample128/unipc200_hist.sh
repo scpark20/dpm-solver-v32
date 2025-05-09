@@ -1,5 +1,5 @@
 DEVICES="0,1,2,3,4,5,6,7"
-CONFIG="imagenet128_guided_raw1024.yml"
+CONFIG="imagenet128_guided_raw128.yml"
 
 for steps in 200; do
     for sampleMethod in 'unipc'; do
