@@ -2,6 +2,7 @@ CKPT_PATH="/data/checkpoints/cifar10_ddpmpp_deep_continuous/checkpoint_8.pth"
 CONFIG="configs/vp/cifar10_ddpmpp_deep_continuous.py"
 SCALE_DIR="/data/score_sde/scale/rbf_ecp_marginal_xt"
 PAIR_NPZ='/data/score_sde/outputs/checkpoint_8/euler_1000/samples_0.npz'
+#PAIR_NPZ='/data/score_sde/outputs/checkpoint_8/DPM-Solver++_200/samples_0.npz'
 for steps in 35 40; do
 
 if [ $steps -le 10 ]; then

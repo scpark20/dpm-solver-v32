@@ -1,0 +1,3 @@
+name : dcsolver_3
+step : 35
+FID  : 2.105252742767334

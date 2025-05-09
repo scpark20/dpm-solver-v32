@@ -393,6 +393,7 @@ class DCSolver:
         return x
 
     def load_optimal_dc_ratios(self, steps, order):
+        print('finding DC NFE={steps}, p={order}')
         import os
         try:
             load_file = os.path.join(self.dc_dir, f'NFE={steps},p={order}.npz')

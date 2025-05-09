@@ -490,24 +490,26 @@ class UniPC:
         signal_rates = torch.tensor([self.noise_schedule.marginal_alpha(t) for t in timesteps])
         noise_rates = torch.tensor([self.noise_schedule.marginal_std(t) for t in timesteps])
 
-        noise = intermediates[0]
-        image = intermediates[-1]
-        targets = []
-        for alpha, sigma in zip(signal_rates, noise_rates):
-            target_traj = alpha*image + sigma*noise
-            targets.append(target_traj)
-
-        # (NFE+1, bchw)
-        targets = torch.stack(targets)
-        # (NFE+1, bchw)
-        intermediates = torch.stack(intermediates)
-        # (NFE, bchw)
-        model_hist = torch.stack(self.model_hist)
-        model_hist = torch.cat([model_hist, torch.zeros_like(model_hist[:1])], dim=0)
-        # (3, NFE+1, bchw)
-        intermediates = torch.stack([targets, intermediates, model_hist])
-        timesteps = torch.stack([timesteps, signal_rates, noise_rates], dim=0)
+        
         if return_intermediate:
+            noise = intermediates[0]
+            image = intermediates[-1]
+            targets = []
+            for alpha, sigma in zip(signal_rates, noise_rates):
+                target_traj = alpha*image + sigma*noise
+                targets.append(target_traj)
+
+            # (NFE+1, bchw)
+            targets = torch.stack(targets)
+            # (NFE+1, bchw)
+            intermediates = torch.stack(intermediates)
+            # (NFE, bchw)
+            model_hist = torch.stack(self.model_hist)
+            model_hist = torch.cat([model_hist, torch.zeros_like(model_hist[:1])], dim=0)
+            # (3, NFE+1, bchw)
+            intermediates = torch.stack([targets, intermediates, model_hist])
+            timesteps = torch.stack([timesteps, signal_rates, noise_rates], dim=0)
+            
             return x, timesteps, intermediates
         else:
             return x

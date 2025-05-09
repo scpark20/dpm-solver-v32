@@ -96,6 +96,7 @@ def sample(config, ckp_path, pair_npz, scale_dir):
     data = np.load(pair_npz)
     x = torch.tensor(data['prior'], device=config.device)
     target = torch.tensor(data['xt'], device=config.device)
+    print('target :', target.shape)
     samples_raw, n = sampling_fn(x, target)
 
 if __name__ == "__main__":

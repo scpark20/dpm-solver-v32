@@ -47,7 +47,7 @@ def compute_fid(path):
     return fid
 
 #names = ['dpm_solver++', "uni_pc_bh1", 'dpm_solver_v3', 'rbf_ecp_marginal_2.0_3', 'rbf_ecp_marginal_2.0_4', 'rbf_ecp_marginal_3.0_3', 'rbf_ecp_marginal_2.0_4']
-names = ['rbf_ecp_marginal_2.0_4']
+names = ['dcsolver_3']
 steps = [5, 6, 8, 10, 12, 15, 20, 25, 30, 35, 40]
 if not os.path.isdir('fid'):
     os.makedirs('fid')
@@ -63,6 +63,7 @@ for step in steps:
             continue
         fid = compute_fid(path)  # FID 계산
         if fid is None:
+            print(path, '<50000')
             continue
         
         with open(filename, "w", encoding="utf-8") as f:

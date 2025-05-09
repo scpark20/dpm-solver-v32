@@ -300,7 +300,7 @@ def main():
                                 'image': image,
                                 'text': text
                                }, os.path.join(outpath, f"{prompt_index}.pt"))
-                    if prompt_index >= 1:
+                    if prompt_index >= 26:
                         break
                                
 if __name__ == "__main__":

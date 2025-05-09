@@ -1044,6 +1044,6 @@ class DPM_Solver:
                 if return_intermediate:
                     intermediates.append(x)
         if return_intermediate:
-            return x, intermediates
+            return x, intermediates, timesteps
         else:
             return x

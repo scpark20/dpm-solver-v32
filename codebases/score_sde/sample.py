@@ -43,6 +43,7 @@ FLAGS = flags.FLAGS
 config_flags.DEFINE_config_file("config", None, "Training configuration.", lock_config=True)
 flags.DEFINE_string("ckp_path", None, "Checkpoint path.")
 flags.DEFINE_string("scale_dir", None, "dir to save scale")
+flags.DEFINE_string("dc_dir", None, "dir to save dc")
 flags.DEFINE_string("statistics_dir", None, "Statistics path for DPM-Solver-v3.")
 flags.DEFINE_string("eval_folder", "/data/score_sde/outputs/", "The folder name for storing evaluation results")
 flags.DEFINE_string("sample_folder", "sample", "The folder name for storing samples")
@@ -69,10 +70,10 @@ def get_data_inverse_scaler(config):
 
 
 def main(argv):
-    sample(FLAGS.config, FLAGS.ckp_path, FLAGS.statistics_dir, FLAGS.eval_folder, FLAGS.sample_folder, FLAGS.return_prior, FLAGS.scale_dir)
+    sample(FLAGS.config, FLAGS.ckp_path, FLAGS.statistics_dir, FLAGS.eval_folder, FLAGS.sample_folder, FLAGS.return_prior, FLAGS.scale_dir, FLAGS.dc_dir)
 
 
-def sample(config, ckp_path, statistics_dir, eval_folder="samples", sample_dir="sample", return_prior=False, scale_dir=None):
+def sample(config, ckp_path, statistics_dir, eval_folder="samples", sample_dir="sample", return_prior=False, scale_dir=None, dc_dir=None):
     # Fix the seed for z = sde.prior_sampling(shape).to(device) in deterministic sampling
     torch.manual_seed(config.seed)
     eval_dir = os.path.join(eval_folder, ckp_path.split("/")[-1].split(".")[-2])
@@ -131,7 +132,7 @@ def sample(config, ckp_path, statistics_dir, eval_folder="samples", sample_dir="
 
         sampling_fn = dpm_solver_v3_sampler
     else:
-        sampling_fn = sampling.get_sampling_fn(config, sde, sampling_shape, inverse_scaler, return_prior=return_prior, scale_dir=scale_dir)
+        sampling_fn = sampling.get_sampling_fn(config, sde, sampling_shape, inverse_scaler, return_prior=return_prior, scale_dir=scale_dir, dc_dir=dc_dir)
         sampling_fn = functools.partial(sampling_fn, score_model)
 
     this_sample_dir = os.path.join(eval_dir, sample_dir)

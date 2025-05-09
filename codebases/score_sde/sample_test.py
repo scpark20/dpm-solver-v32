@@ -139,7 +139,7 @@ def sample(config, ckp_path, statistics_dir, eval_folder="samples", sample_dir="
     os.makedirs(this_sample_dir, exist_ok=True)
     logging.info(this_sample_dir)
     num_sampling_rounds = config.eval.num_samples // config.eval.batch_size + 1
-    for r in range(16):
+    for r in range(1):
         ret = sampling_fn()
         if len(ret) == 2:
             samples_raw, n = ret
@@ -155,6 +155,7 @@ def sample(config, ckp_path, statistics_dir, eval_folder="samples", sample_dir="
                                 samples=samples,
                                 samples_raw=samples_raw.cpu())
         elif len(ret) == 4:
+            print('len(ret) == 4')
             np.savez_compressed(os.path.join(this_sample_dir, f"samples_{r}.npz"),
                                 samples=samples,
                                 timesteps=timesteps.cpu(),

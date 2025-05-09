@@ -1262,7 +1262,8 @@ class Diffusion(object):
 
         
         elif self.args.sample_type == "dpmsolver_v3":
-            from samplers.dpm_solver_v3 import model_wrapper
+            from samplers.uni_pc import NoiseScheduleVP, model_wrapper
+            from samplers.dpm_solver_v3 import DPM_Solver_v3
 
             def model_fn(x, t, **model_kwargs):
                 out = model(x, t, **model_kwargs)
@@ -1278,9 +1279,10 @@ class Diffusion(object):
                 log_probs = torch.nn.functional.log_softmax(logits, dim=-1)
                 return log_probs[range(len(logits)), y.view(-1)]
 
+            noise_schedule = NoiseScheduleVP(schedule="discrete", betas=self.betas)
             model_fn_continuous = model_wrapper(
                 model_fn,
-                self.noise_schedule,
+                noise_schedule,
                 model_type="noise",
                 model_kwargs=model_kwargs,
                 guidance_type="uncond" if classifier is None else "classifier",
@@ -1289,7 +1291,20 @@ class Diffusion(object):
                 classifier_fn=classifier_fn,
                 classifier_kwargs={},
             )
-            x = self.dpm_solver_v3.sample(
+
+            stats_dir = self.args.statistics_dir
+
+            assert stats_dir is not None, "No statistics file found."
+            print("Use statistics", stats_dir)
+
+            dpm_solver_v3 = DPM_Solver_v3(
+                stats_dir,
+                noise_schedule,
+                steps=self.args.timesteps,
+                skip_type=self.args.skip_type,
+                degenerated=False,
+            )
+            x = dpm_solver_v3.sample(
                 x,
                 model_fn_continuous,
                 order=self.args.order,

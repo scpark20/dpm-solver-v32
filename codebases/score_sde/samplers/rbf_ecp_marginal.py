@@ -19,7 +19,7 @@ class RBFSolverECPMarginal:
             log_scale_min=-2.0,
             log_scale_max=2.0,
             log_scale_num=33
-    ):
+    ):  
         self.model = lambda x, t: model_fn(x, t.expand((x.shape[0])))
         self.noise_schedule = noise_schedule
         assert algorithm_type in ["data_prediction", "noise_prediction"]
@@ -413,6 +413,7 @@ class RBFSolverECPMarginal:
                lower_order_final=True,
                 log_scale_p=2.0,
                 log_scale_c=0.0,
+                return_intermediate=False
                 ):
         # log_scale : predictor, corrector 모든 step에 적용할 log_scale, log_scales가 load안되면 log_scale로 작동
         # log_scales : predictor, corrector, step별로 적용할 log_scale array, shape : (2, NFE)
@@ -424,7 +425,7 @@ class RBFSolverECPMarginal:
         
         # 텐서가 올라갈 디바이스 설정
         device = x.device
-
+    
         # 샘플링 과정에서 gradient 계산은 하지 않으므로 no_grad()
         with torch.no_grad():
 
@@ -437,7 +438,7 @@ class RBFSolverECPMarginal:
             
             hist = [None for _ in range(steps)]
             hist[0] = self.model_fn(x, timesteps[0])   # model(x,t) 평가값을 저장
-            
+            intermediates = [x]
             for i in range(0, steps):
                 if i >= order and lower_order_final:
                     p = min(i+1, steps - i, order)
@@ -450,7 +451,6 @@ class RBFSolverECPMarginal:
                 beta = 1 / (np.exp(s) * abs(lambdas[i+1] - lambdas[i]))
                 x_pred = self.get_next_sample(x, i, hist, signal_rates, noise_rates, lambdas,
                                               p=p, beta=beta, corrector=False, lagrange=lagrange)
-                
                 if i == steps - 1:
                     x = x_pred
                     break
@@ -465,5 +465,28 @@ class RBFSolverECPMarginal:
                 x_corr = self.get_next_sample(x, i, hist, signal_rates, noise_rates, lambdas,
                                               p=p, beta=beta, corrector=True, lagrange=lagrange)
                 x = x_corr
-        # 최종적으로 x를 반환
-        return x
+                intermediates.append(x)
+        intermediates.append(x)
+
+        noise = intermediates[0]
+        image = intermediates[-1]
+        targets = []
+        for alpha, sigma in zip(signal_rates, noise_rates):
+            target_traj = alpha*image + sigma*noise
+            targets.append(target_traj)
+
+        # (NFE+1, bchw)
+        targets = torch.stack(targets)
+        # (NFE+1, bchw)
+        intermediates = torch.stack(intermediates)
+        # (NFE, bchw)
+        model_hist = torch.stack(hist)
+        model_hist = torch.cat([model_hist, torch.zeros_like(model_hist[:1])], dim=0)
+        # (3, NFE+1, bchw)
+        intermediates = torch.stack([targets, intermediates, model_hist])
+        timesteps = torch.stack([timesteps, signal_rates, noise_rates], dim=0)
+
+        if return_intermediate:
+            return x, timesteps, intermediates
+        else:
+            return x

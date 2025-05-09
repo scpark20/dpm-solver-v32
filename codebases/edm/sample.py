@@ -27,6 +27,7 @@ from torchvision.utils import make_grid, save_image
 from samplers.dpm_solver import DPM_Solver
 from samplers.uni_pc import UniPC
 from samplers.rbf_ecp_marginal import RBFSolverECPMarginal
+from samplers.dc_solver import DCSolver
 from samplers.dpm_solver_v3 import DPM_Solver_v3
 from samplers.heun import Heun
 from samplers.utils import NoiseScheduleEDM, model_wrapper
@@ -41,6 +42,7 @@ flags.DEFINE_string("method", None, "Method: heun/dpm_solver++/uni_pc/dpm_solver
 flags.DEFINE_string("eval_folder", "samples", "The folder name for storing evaluation results")
 flags.DEFINE_string("sample_folder", "sample", "The folder name for storing samples")
 flags.DEFINE_string("scale_dir", "/data/edm/scale", "The folder name for storing scales")
+flags.DEFINE_string("dc_dir", "/data/edm/dc", "The folder name for storing dcs")
 flags.DEFINE_string("unipc_variant", "bh1", "UniPC variant: bh1/bh2")
 flags.DEFINE_integer("steps", default=10, help="Number of sampling steps")
 flags.DEFINE_integer("order", default=3, help="Order for sampling")
@@ -62,6 +64,7 @@ def main(argv):
         FLAGS.denoise_to_zero,
         FLAGS.unipc_variant,
         FLAGS.scale_dir,
+        FLAGS.dc_dir,
     )
 
 
@@ -77,6 +80,7 @@ def sample(
     denoise_to_zero,
     unipc_variant,
     scale_dir,
+    dc_dir,
     batch_size=256,
     num_samples=50000,
     sigma_min=0.002,
@@ -169,6 +173,25 @@ def sample(
                 return x, steps
 
         sampling_fn = rbf_sampler
+
+    elif method == "dcsolver":
+        dc = DCSolver(ns, dc_dir=dc_dir)
+
+        def dc_sampler(model_fn, z):
+            with torch.no_grad():
+                x = dc.sample(
+                    model_fn,
+                    z,
+                    steps=steps - 1 if denoise_to_zero else steps,
+                    t_start=sigma_max,
+                    t_end=sigma_min,
+                    order=order,
+                    skip_type=skip_type,
+                    method='multistep'
+                )
+                return x, steps
+
+        sampling_fn = dc_sampler
 
     elif method == "dpm_solver_v3":
         assert statistics_dir is not None, "No appropriate statistics found."

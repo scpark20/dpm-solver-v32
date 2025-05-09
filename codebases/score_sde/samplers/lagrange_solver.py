@@ -172,6 +172,7 @@ class LagrangeSolver:
                t_start=None, t_end=None,
                order=3, skip_type='logSNR', method='data_prediction',
                lower_order_final=True):
+        noise = x
         print(f'steps: {steps}, order: {order}, skip_type: {skip_type}, method={method}')
         
         # 샘플링할 시간 범위 설정 (t_0, t_T)
@@ -220,6 +221,6 @@ class LagrangeSolver:
                                               p=p, corrector=True)
                 x = x_corr
                 xs[i] = x
-            xs[-1] = x
+
         # 최종적으로 x를 반환
-        return x, torch.stack([h.cpu() for h in hist], dim=1), torch.stack([h.cpu() for h in xs], dim=1)
+        return x, torch.stack([noise.cpu()] + [h.cpu() for h in hist], dim=1), torch.stack([noise.cpu()] + [h.cpu() for h in xs], dim=1)

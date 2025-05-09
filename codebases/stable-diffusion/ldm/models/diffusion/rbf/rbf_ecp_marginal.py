@@ -681,6 +681,117 @@ class RBFSolverECPMarginal:
 
         return loss
 
+    def time_linear_interpolate_simple(self, x: torch.Tensor, t2: int) -> torch.Tensor:
+        T, B, C, H, W = x.shape
+    
+        # 첫 번째 지점: floor(T/t2) - 1 (단, 0 이상으로 보정)
+        start_idx = math.floor(T / t2) - 1
+        start_idx = max(start_idx, 0)
+        
+        # 마지막 지점: T - 1
+        end_idx = T - 1
+
+        # 위 두 지점을 포함하여 t2개를 선형보간 기준으로 뽑는다
+        t_lin = torch.linspace(start_idx, end_idx, steps=t2, device=x.device)
+        print(t_lin)
+        
+        # 아래는 기존 보간 로직과 동일
+        floor_idx = t_lin.floor().long()
+        alpha = t_lin - floor_idx.float()
+        ceil_idx = (floor_idx + 1).clamp(max=T - 1)
+        
+        x_left = x[floor_idx]   # (t2, B, C, H, W)
+        x_right = x[ceil_idx]   # (t2, B, C, H, W)
+        
+        alpha = alpha.view(t2, 1, 1, 1, 1)
+        return x_left * (1 - alpha) + x_right * alpha
+
+    def sample_by_traj_matching(self, traj,
+                                  steps, t_start=None, t_end=None, order=3, skip_type='logSNR',
+                                  method='data_prediction', lower_order_final=True, denoise_to_zero=False, number=0):
+        x = traj[0]
+        traj = self.time_linear_interpolate_simple(traj[1:], steps)
+        print(f'def sample_by_traj_matching start!!! number: {number}')
+        print(f"x.shape: {x.shape}, traj.shape: {traj.shape}, steps: {steps}, order: {order}, skip_type: {skip_type}, lower_order_final: {lower_order_final}")
+        # 샘플링할 시간 범위 설정 (t_0, t_T)
+        # diffusion 모델의 경우 t=1(혹은 T)에서 x는 가우시안 노이즈 상태라고 가정.
+        t_0 = 1.0 / self.noise_schedule.total_N if t_end is None else t_end
+        t_T = self.noise_schedule.T if t_start is None else t_start
+
+        # 텐서가 올라갈 디바이스 설정
+        device = x.device
+        
+        # 샘플링 과정에서 gradient 계산은 하지 않으므로 no_grad()
+        with torch.no_grad():
+
+            # 실제로 사용할 time step array를 구한다.
+            # timesteps는 길이가 steps+1인 1-D 텐서: [t_T, ..., t_0]
+            timesteps = self.get_time_steps(skip_type=skip_type, t_T=t_T, t_0=t_0, N=steps, device=x.device)
+            lambdas = torch.tensor([self.noise_schedule.marginal_lambda(t) for t in timesteps], device=x.device)
+            signal_rates = torch.tensor([self.noise_schedule.marginal_alpha(t) for t in timesteps], device=x.device)
+            noise_rates = torch.tensor([self.noise_schedule.marginal_std(t) for t in timesteps], device=x.device)
+
+            log_scales = np.linspace(self.log_scale_min, self.log_scale_max, self.log_scale_num)
+            optimal_log_scales = np.zeros((2, steps))
+            loss_grid_list = []
+            
+            hist = [None for _ in range(steps)]
+            x_pred = x
+            p_prev = None
+            for i in range(0, steps):
+                if lower_order_final:
+                    p = min(i+1, steps - i, order)
+                else:
+                    p = min(i+1, order)
+
+                # ===Evaluation===
+                hist[i] = self.model_fn(x_pred, timesteps[i])
+                
+                target = traj[i]
+                if i > 0: # Grid Search
+                    loss_grid = np.full((self.log_scale_num, self.log_scale_num), np.inf)
+                    for pindex, log_scale_p in enumerate(log_scales):
+                        for cindex, log_scale_c in enumerate(log_scales):
+                            loss = self.get_loss_by_target_matching(i, x, target, hist, noise_rates, log_scale_p, log_scale_c, lambdas, p, p_prev)
+                            loss_grid[pindex, cindex] = loss.item()
+                    min_index = np.unravel_index(np.argmin(loss_grid), loss_grid.shape)
+                    optimal_log_scales[0, i] = log_scales[min_index[0]]
+                    optimal_log_scales[1, i-1] = log_scales[min_index[1]]
+                    loss_grid_list.append(loss_grid)
+                    
+                else: # Line Search
+                    loss_line = np.full(self.log_scale_num, np.inf)
+                    for pindex, log_scale_p in enumerate(log_scales):
+                        loss = self.get_loss_by_target_matching(i, x, target, hist, noise_rates, log_scale_p, None, lambdas, p, p_prev)
+                        loss_line[pindex] = loss.item()
+                    min_index = np.argmin(loss_line)
+                    optimal_log_scales[0, i] = log_scales[min_index]
+
+                if i > 0:
+                    # ===Corrector===
+                    log_s = optimal_log_scales[1, i-1]
+                    beta = 1 / (np.exp(log_s) * abs(lambdas[i] - lambdas[i-1]))
+                    lagrange = (log_s >= self.log_scale_max)
+                    x = self.get_next_sample(x, i-1, hist, signal_rates, noise_rates, lambdas, p_prev, beta, corrector=True, lagrange=lagrange)
+                        
+                # ===predictor===
+                log_s = optimal_log_scales[0, i]
+                beta = 1 / (np.exp(log_s) * abs(lambdas[i+1] - lambdas[i]))
+                lagrange = (log_s >= self.log_scale_max)
+                x_pred = self.get_next_sample(x, i, hist, signal_rates, noise_rates, lambdas, p, beta, corrector=False, lagrange=lagrange)
+                p_prev = p
+            x = x_pred
+
+        if self.scale_dir is not None:
+            save_file = os.path.join(self.scale_dir, f'NFE={steps},p={order},number={number}.npz')
+            np.savez(save_file,
+                     optimal_log_scales=optimal_log_scales,
+                     loss_grid_list=loss_grid_list)
+            print(save_file, ' saved!')
+
+        # 최종적으로 x를 반환
+        return x
+
     def sample_by_target_matching(self, x, target,
                                   steps, t_start=None, t_end=None, order=3, skip_type='logSNR',
                                   method='data_prediction', lower_order_final=True, denoise_to_zero=False, number=0):
