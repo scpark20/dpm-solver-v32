@@ -984,7 +984,7 @@ class UniPC:
             model_hist = torch.stack(self.model_hist)
             model_hist = torch.cat([model_hist, torch.zeros_like(model_hist[:1])], dim=0)
             intermediates = torch.stack([targets, intermediates, model_hist])
-            return x, intermediates
+            return x, intermediates, timesteps
         else:
             return x
 
