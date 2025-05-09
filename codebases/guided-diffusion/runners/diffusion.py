@@ -325,15 +325,29 @@ class Diffusion(object):
                 )
                 
                 x, classes = self.sample_image(noise, model, classifier=classifier, return_hist=self.sample_raw_flag)
+                # if self.sample_raw_flag:
+                #     x, hist, timesteps = x
+                #     path = os.path.join(self.args.image_folder, f"samples_{r}.npz")
+                #     np.savez_compressed(path,
+                #                         noises_raw=noise.cpu(),
+                #                         datas_raw=x.cpu(),
+                #                         hist_raw=hist.cpu(),
+                #                         timesteps_raw=timesteps.cpu(),
+                #                         classes=classes.cpu() if classes is not None else 0)
+                    
                 if self.sample_raw_flag:
                     x, hist, timesteps = x
-                    path = os.path.join(self.args.image_folder, f"samples_{r}.npz")
-                    np.savez_compressed(path,
-                                        noises_raw=noise.cpu(),
-                                        datas_raw=x.cpu(),
-                                        hist_raw=hist.cpu(),
-                                        timesteps_raw=timesteps.cpu(),
-                                        classes=classes.cpu() if classes is not None else 0)
+                    save_path = os.path.join(self.args.image_folder, f"samples_{int(img_id+r*n)}.pt")  # 확장자 .pt / .pth 아무거나 OK
+                    torch.save(
+                        {
+                            "noises_raw":   noise.detach().cpu(),
+                            "datas_raw":    x.detach().cpu(),
+                            "hist_raw":     hist.detach().cpu(),
+                            "timesteps_raw": timesteps.detach().cpu(),
+                            "classes":      classes.detach().cpu() if classes is not None else None,
+                        },
+                        save_path,
+                    )
                 else:
                     x = inverse_data_transform(config, x)
                     for i in range(x.shape[0]):
